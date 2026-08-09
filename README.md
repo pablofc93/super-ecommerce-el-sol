@@ -226,12 +226,41 @@ El archivo `.env` está excluido mediante `.gitignore` y no debe subirse al repo
 
 El proyecto ofrece dos alternativas para disponer de una base de datos:
 
-* **Alternativa A:** crear una base de datos desde cero.
-* **Alternativa B:** utilizar una copia de la base de datos SQLite previamente preparada.
+* **Alternativa A:** utilizar una copia de la base de datos SQLite completa previamente preparada.
+* **Alternativa B:** crear la base de datos desde cero mediante las migraciones y los comandos de carga de datos.
 
-### Alternativa A — Crear una base de datos desde cero
+---
 
-Esta alternativa permite realizar una instalación limpia del proyecto.
+### Alternativa A — Utilizar una base de datos SQLite existente
+
+Esta alternativa permite disponer rápidamente de una base de datos completa con los datos de prueba previamente cargados.
+
+Descargar `db.sqlite3` desde:
+
+[Descargar base de datos SQLite](https://mega.nz/file/f5QBkZoZ#CxVA_bZ7eUmzYYwo_cSmCo29gdZZq1Q4KnJp20s4OMs)
+
+El archivo contiene una copia de la base de datos del sistema con los datos de prueba previamente cargados.
+
+#### Instalación
+
+1. Descargar el archivo `db.sqlite3`.
+2. Colocar el archivo descargado en:
+
+```text
+backend/db.sqlite3
+```
+
+Una vez colocado el archivo en esa ubicación, se dispondrá de la base de datos completa utilizada por el sistema.
+
+> Esta alternativa permite evitar la ejecución de todos los comandos de generación de datos.
+
+> La base de datos SQLite no se almacena directamente en el repositorio debido a su tamaño. Se proporciona externamente para facilitar la ejecución del proyecto con datos de prueba.
+
+---
+
+### Alternativa B — Crear la base de datos desde cero
+
+Esta alternativa permite generar una instalación limpia de la base de datos mediante las migraciones y los comandos de carga incluidos en el backend.
 
 Primero ejecutar las migraciones:
 
@@ -257,15 +286,15 @@ python manage.py seed_categorias
 
 #### 2. Productos
 
-Los productos utilizados por el sistema deben estar disponibles antes de ejecutar los seeds que generan carritos, pedidos y compras.
+Genera los productos utilizados por el sistema y los asocia con las categorías existentes.
 
 ```bash
 python manage.py seed_productos
 ```
 
-**Estado:** Pendiente de creación del seed.
+**Estado:** Cargado.
 
-> Este comando se documenta como parte del flujo previsto de instalación. Actualmente el seed de productos se encuentra pendiente de implementación.
+> Este comando debe ejecutarse después de `seed_categorias` y antes de los seeds que dependan de productos, como los correspondientes a carritos y pedidos.
 
 ---
 
@@ -383,19 +412,19 @@ python manage.py actualizar_analitica
 
 ### Resumen del orden
 
-| Orden | Tabla / módulo    | Comando                | Estado    |
-| ----: | ----------------- | ---------------------- | --------- |
-|     1 | Categorías        | `seed_categorias`      | Cargado   |
-|     2 | Productos         | `seed_productos`       | Pendiente |
-|     3 | Usuarios          | `seed_usuarios`        | Cargado   |
-|     4 | Clientes          | `seed_clientes`        | Cargado   |
-|     5 | Carritos          | `seed_carritos`        | Cargado   |
-|     6 | Items del carrito | `seed_carrito_items`   | Cargado   |
-|     7 | Pedidos           | `seed_pedidos`         | Cargado   |
-|     8 | Items del pedido  | `seed_pedidoitems`     | Cargado   |
-|     9 | Pagos             | `seed_pagos`           | Cargado   |
-|    10 | Compras           | `seed_compras`         | Cargado   |
-|    11 | Analítica         | `actualizar_analitica` | Cargado   |
+| Orden | Tabla / módulo    | Comando                | Estado  |
+| ----: | ----------------- | ---------------------- | ------- |
+|     1 | Categorías        | `seed_categorias`      | Cargado |
+|     2 | Productos         | `seed_productos`       | Cargado |
+|     3 | Usuarios          | `seed_usuarios`        | Cargado |
+|     4 | Clientes          | `seed_clientes`        | Cargado |
+|     5 | Carritos          | `seed_carritos`        | Cargado |
+|     6 | Items del carrito | `seed_carrito_items`   | Cargado |
+|     7 | Pedidos           | `seed_pedidos`         | Cargado |
+|     8 | Items del pedido  | `seed_pedidoitems`     | Cargado |
+|     9 | Pagos             | `seed_pagos`           | Cargado |
+|    10 | Compras           | `seed_compras`         | Cargado |
+|    11 | Analítica         | `actualizar_analitica` | Cargado |
 
 > **Importante:** el orden anterior corresponde al procedimiento utilizado para generar los datos de prueba del proyecto. Se recomienda respetarlo al realizar una instalación desde cero.
 
@@ -412,27 +441,6 @@ La creación o disponibilidad del usuario administrador depende de la configurac
 Los usuarios y clientes de prueba pueden generarse mediante los comandos correspondientes.
 
 Las credenciales de acceso se documentan en la sección [Usuarios de prueba](#usuarios-de-prueba).
-
-### Alternativa B — Utilizar una base de datos SQLite existente
-
-También es posible utilizar una copia de la base de datos SQLite previamente preparada.
-
-Descargar `db.sqlite3` desde:
-
-[Descargar base de datos SQLite](https://mega.nz/file/f5QBkZoZ#CxVA_bZ7eUmzYYwo_cSmCo29gdZZq1Q4KnJp20s4OMs)
-
-El archivo contiene una base de datos del sistema con datos de prueba previamente cargados.
-
-1. Descargar el archivo `db.sqlite3`.
-2. Colocar el archivo descargado en:
-
-```text
-backend/db.sqlite3
-```
-
-Una vez colocado el archivo en esa ubicación, se dispondrá de la base de datos con los datos de prueba previamente cargados.
-
-> La base de datos SQLite no se almacena directamente en el repositorio debido a su tamaño. Se proporciona externamente como una alternativa para facilitar la ejecución del proyecto con datos de prueba.
 
 ## 6. Ejecutar el backend
 
@@ -541,7 +549,10 @@ backend/db.sqlite3
 
 está excluido del repositorio mediante `.gitignore`.
 
-La base de datos puede inicializarse mediante las migraciones y los comandos de carga incluidos en el backend o mediante la copia previamente preparada disponible en la sección [Alternativa B](#alternativa-b--utilizar-una-base-de-datos-sqlite-existente).
+La base de datos puede obtenerse mediante dos alternativas:
+
+1. Descargar la base de datos completa desde la sección [Alternativa A](#alternativa-a--utilizar-una-base-de-datos-sqlite-existente).
+2. Crear la base de datos desde cero mediante las migraciones y los comandos de carga de datos descritos en la sección [Alternativa B](#alternativa-b--crear-la-base-de-datos-desde-cero).
 
 ---
 

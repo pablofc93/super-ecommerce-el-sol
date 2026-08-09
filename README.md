@@ -1,6 +1,6 @@
 # Super Ecommerce El Sol
 
-Sistema de comercio electrónico con gestión de productos, categorías, clientes, usuarios, carritos, pedidos y pagos, complementado con un panel administrativo, análisis de datos, segmentación de clientes y sistemas de recomendación.
+Sistema de comercio electrónico desarrollado con Django y Angular, que permite gestionar productos, categorías, clientes, usuarios, carritos, pedidos y pagos. El sistema incorpora además un panel administrativo, análisis de datos, segmentación de clientes y sistemas de recomendación.
 
 ## Tecnologías utilizadas
 
@@ -44,8 +44,8 @@ Sistema de comercio electrónico con gestión de productos, categorías, cliente
 * Carrito de compras.
 * Realización de pedidos.
 * Consulta de pedidos realizados.
-* Gestión del perfil.
 * Consulta del historial de compras.
+* Gestión del perfil.
 
 ### Administración
 
@@ -107,8 +107,7 @@ super-ecommerce-el-sol/
 │   └── package-lock.json
 │
 ├── .gitignore
-├── README.md
-└── venv/
+└── README.md
 ```
 
 > Los archivos generados automáticamente o que contienen información sensible, como `.env`, `db.sqlite3` y `venv/`, están excluidos del repositorio mediante `.gitignore`.
@@ -133,13 +132,15 @@ git clone https://github.com/pablofc93/super-ecommerce-el-sol.git
 cd super-ecommerce-el-sol
 ```
 
+> La rama principal del repositorio es `master`.
+
 ---
 
 # Backend
 
 ## 2. Crear el entorno virtual
 
-El entorno virtual se encuentra recomendado en la raíz del proyecto para mantener aisladas las dependencias de Python.
+El entorno virtual se recomienda en la raíz del proyecto para mantener aisladas las dependencias de Python.
 
 Desde la carpeta raíz:
 
@@ -169,13 +170,13 @@ Con el entorno virtual activado, acceder a la carpeta del backend:
 cd backend
 ```
 
-Luego instalar las dependencias:
+Instalar las dependencias:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-El archivo `requirements.txt` contiene las versiones de las dependencias utilizadas por el backend.
+El archivo `requirements.txt` contiene las dependencias utilizadas por el backend.
 
 ## 4. Configurar las variables de entorno
 
@@ -223,11 +224,14 @@ El archivo `.env` está excluido mediante `.gitignore` y no debe subirse al repo
 
 ## 5. Inicializar la base de datos
 
-El proyecto ofrece dos alternativas para inicializar la base de datos.
+El proyecto ofrece dos alternativas para disponer de una base de datos:
+
+* **Alternativa A:** crear una base de datos desde cero.
+* **Alternativa B:** utilizar una copia de la base de datos SQLite previamente preparada.
 
 ### Alternativa A — Crear una base de datos desde cero
 
-Esta es la alternativa recomendada para una instalación limpia del proyecto.
+Esta alternativa permite realizar una instalación limpia del proyecto.
 
 Primero ejecutar las migraciones:
 
@@ -235,7 +239,7 @@ Primero ejecutar las migraciones:
 python manage.py migrate
 ```
 
-Luego ejecutar los comandos de carga de datos respetando **estrictamente el siguiente orden**, debido a las relaciones existentes entre las tablas.
+Luego ejecutar los comandos de carga de datos respetando el orden indicado a continuación, debido a las relaciones existentes entre las diferentes entidades.
 
 ### Orden de carga de los datos
 
@@ -253,15 +257,15 @@ python manage.py seed_categorias
 
 #### 2. Productos
 
-Genera los productos asociados a las categorías existentes.
+Los productos utilizados por el sistema deben estar disponibles antes de ejecutar los seeds que generan carritos, pedidos y compras.
 
 ```bash
 python manage.py seed_productos
 ```
 
-**Estado:** **Pendiente de creación del seed.**
+**Estado:** Pendiente de creación del seed.
 
-> Este seed deberá ejecutarse después de `seed_categorias` y antes de los demás seeds que utilicen productos.
+> Este comando se documenta como parte del flujo previsto de instalación. Actualmente el seed de productos se encuentra pendiente de implementación.
 
 ---
 
@@ -269,7 +273,7 @@ python manage.py seed_productos
 
 Genera los usuarios de prueba del sistema.
 
-Para generar 2500 usuarios aleatorios:
+Para generar 2500 usuarios:
 
 ```bash
 python manage.py seed_usuarios --cantidad 2500
@@ -281,7 +285,7 @@ python manage.py seed_usuarios --cantidad 2500
 
 #### 4. Clientes
 
-Genera 2500 clientes, asociando cada cliente con un usuario existente.
+Genera 2500 clientes asociados a usuarios existentes.
 
 ```bash
 python manage.py seed_clientes --cantidad 2500
@@ -293,7 +297,7 @@ python manage.py seed_clientes --cantidad 2500
 
 #### 5. Carritos
 
-Genera 2500 carritos, asociando cada carrito con un cliente existente.
+Genera 2500 carritos asociados a clientes existentes.
 
 ```bash
 python manage.py seed_carritos --cantidad 2500
@@ -308,7 +312,7 @@ python manage.py seed_carritos --cantidad 2500
 Genera los elementos asociados a los carritos y productos existentes.
 
 ```bash
-python manage.py seed_carritoitems
+python manage.py seed_carrito_items
 ```
 
 **Estado:** Cargado.
@@ -323,7 +327,7 @@ Genera 20000 pedidos.
 python manage.py seed_pedidos --cantidad 20000
 ```
 
-> Cada ejecución de este comando genera otros 20000 pedidos.
+> Cada ejecución del comando genera otros 20000 pedidos.
 
 **Estado:** Cargado.
 
@@ -375,61 +379,60 @@ python manage.py actualizar_analitica
 
 **Estado:** Cargado.
 
-> La generación de la analítica debe realizarse después de cargar los datos de usuarios, clientes, productos, pedidos, items de pedidos, pagos y compras.
+> La generación de la analítica debe realizarse después de disponer de usuarios, clientes, productos, pedidos, items de pedidos, pagos y compras.
 
 ### Resumen del orden
 
-| Orden | Tabla / módulo    | Comando                | Estado        |
-| ----: | ----------------- | ---------------------- | ------------- |
-|     1 | Categorías        | `seed_categorias`      | Cargado       |
-|     2 | Productos         | `seed_productos`       | **Pendiente** |
-|     3 | Usuarios          | `seed_usuarios`        | Cargado       |
-|     4 | Clientes          | `seed_clientes`        | Cargado       |
-|     5 | Carritos          | `seed_carritos`        | Cargado       |
-|     6 | Items del carrito | `seed_carritoitems`    | Cargado       |
-|     7 | Pedidos           | `seed_pedidos`         | Cargado       |
-|     8 | Items del pedido  | `seed_pedidoitems`     | Cargado       |
-|     9 | Pagos             | `seed_pagos`           | Cargado       |
-|    10 | Compras           | `seed_compras`         | Cargado       |
-|    11 | Analítica         | `actualizar_analitica` | Cargado       |
+| Orden | Tabla / módulo    | Comando                | Estado    |
+| ----: | ----------------- | ---------------------- | --------- |
+|     1 | Categorías        | `seed_categorias`      | Cargado   |
+|     2 | Productos         | `seed_productos`       | Pendiente |
+|     3 | Usuarios          | `seed_usuarios`        | Cargado   |
+|     4 | Clientes          | `seed_clientes`        | Cargado   |
+|     5 | Carritos          | `seed_carritos`        | Cargado   |
+|     6 | Items del carrito | `seed_carrito_items`   | Cargado   |
+|     7 | Pedidos           | `seed_pedidos`         | Cargado   |
+|     8 | Items del pedido  | `seed_pedidoitems`     | Cargado   |
+|     9 | Pagos             | `seed_pagos`           | Cargado   |
+|    10 | Compras           | `seed_compras`         | Cargado   |
+|    11 | Analítica         | `actualizar_analitica` | Cargado   |
 
 > **Importante:** el orden anterior corresponde al procedimiento utilizado para generar los datos de prueba del proyecto. Se recomienda respetarlo al realizar una instalación desde cero.
 
 ### Administrador
 
-El usuario administrador deberá estar disponible para acceder al panel administrativo.
+Para acceder al panel administrativo se necesita disponer de un usuario con permisos de administrador.
 
-**Estado:** Pendiente de documentar las credenciales y/o el procedimiento de creación.
+La creación o disponibilidad del usuario administrador depende de la configuración de la instalación.
+
+**Estado:** Pendiente de documentar las credenciales y/o procedimiento de creación.
 
 ### Usuarios de prueba
 
-Los usuarios y clientes de prueba son generados mediante los comandos correspondientes.
+Los usuarios y clientes de prueba pueden generarse mediante los comandos correspondientes.
 
-Las credenciales de acceso que se utilizarán para probar el sistema serán documentadas en la sección [Usuarios de prueba](#usuarios-de-prueba).
+Las credenciales de acceso se documentan en la sección [Usuarios de prueba](#usuarios-de-prueba).
 
 ### Alternativa B — Utilizar una base de datos SQLite existente
 
-También es posible utilizar una copia de la base de datos SQLite ya preparada.
+También es posible utilizar una copia de la base de datos SQLite previamente preparada.
 
 Descargar `db.sqlite3` desde:
 
-https://mega.nz/file/q1xwADgT#ocwb_qbO_YtbXu0dn8gVG11VqezgCQVI2uhi8HJDrn0
+[Descargar base de datos SQLite](https://mega.nz/file/f5QBkZoZ#CxVA_bZ7eUmzYYwo_cSmCo29gdZZq1Q4KnJp20s4OMs)
 
-En este enlace se proporciona tanto la base de datos como la carpeta de imágenes de los productos
+El archivo contiene una base de datos del sistema con datos de prueba previamente cargados.
 
-1-Descargar el archivo
-
-2-Descomprimir
-
-3-Luego colocar el archivo db.sqlite3 en:
+1. Descargar el archivo `db.sqlite3`.
+2. Colocar el archivo descargado en:
 
 ```text
 backend/db.sqlite3
 ```
 
-De esta manera se dispondrá de una base de datos con los datos de prueba previamente cargados.
+Una vez colocado el archivo en esa ubicación, se dispondrá de la base de datos con los datos de prueba previamente cargados.
 
-> La base de datos SQLite no se almacena directamente en el repositorio debido a su tamaño y a que los datos pueden ser regenerados mediante los comandos de carga.
+> La base de datos SQLite no se almacena directamente en el repositorio debido a su tamaño. Se proporciona externamente como una alternativa para facilitar la ejecución del proyecto con datos de prueba.
 
 ## 6. Ejecutar el backend
 
@@ -458,9 +461,11 @@ cd frontend
 npm install
 ```
 
-Esto instalará las dependencias especificadas en `package.json` utilizando las versiones registradas en `package-lock.json`.
+Esto instalará las dependencias especificadas en `package.json`, utilizando las versiones registradas en `package-lock.json`.
 
 ## 8. Ejecutar Angular
+
+Ejecutar:
 
 ```bash
 ng serve
@@ -472,7 +477,7 @@ El frontend estará disponible normalmente en:
 http://localhost:4200/
 ```
 
-## 9. Ejecutar el sistema
+## 9. Ejecutar el sistema completo
 
 Para utilizar el sistema completo deben estar ejecutándose simultáneamente el backend y el frontend.
 
@@ -503,6 +508,8 @@ Luego acceder desde el navegador a:
 http://localhost:4200/
 ```
 
+---
+
 ## Variables de entorno
 
 Las variables sensibles o específicas del entorno no deben almacenarse directamente en el repositorio.
@@ -514,11 +521,13 @@ backend/.env
 backend/.env.example
 ```
 
-`.env.example` contiene las variables necesarias como referencia.
+El archivo `.env.example` contiene las variables necesarias como referencia.
 
-`.env` contiene los valores utilizados por la instalación local y está excluido mediante `.gitignore`.
+El archivo `.env` contiene los valores utilizados por la instalación local y está excluido mediante `.gitignore`.
 
 Cada desarrollador debe crear su propio archivo `.env` a partir de `.env.example`.
+
+---
 
 ## Base de datos
 
@@ -532,17 +541,45 @@ backend/db.sqlite3
 
 está excluido del repositorio mediante `.gitignore`.
 
-La base de datos puede inicializarse mediante las migraciones y los comandos de carga incluidos en el backend o mediante una copia previamente preparada.
+La base de datos puede inicializarse mediante las migraciones y los comandos de carga incluidos en el backend o mediante la copia previamente preparada disponible en la sección [Alternativa B](#alternativa-b--utilizar-una-base-de-datos-sqlite-existente).
+
+---
 
 ## Imágenes de productos
 
 Las imágenes utilizadas por los productos se almacenan externamente y no se incluyen directamente en el repositorio debido a su cantidad y tamaño.
 
+### Descarga de las imágenes
 
-Descarga carpeta de imágenes:
-https://mega.nz/folder/rphGVKwD#uqppgeecaqomuvZLZYaodw
+Las imágenes se encuentran disponibles en un archivo comprimido `.rar`:
 
-Copiar la carpeta productos dentro de: ```text /backend/media/ ```
+[Descargar imágenes de productos](https://mega.nz/file/P9Ykib7A#Hh3-crdHcVJEIsE_zJ57212eJYqqAH8JosxKGFq2hlc)
+
+### Instalación de las imágenes
+
+1. Descargar el archivo `.rar`.
+2. Extraer su contenido.
+3. Localizar la carpeta `productos`.
+4. Copiar la carpeta `productos` dentro de:
+
+```text
+backend/media/
+```
+
+La estructura final debería quedar aproximadamente así:
+
+```text
+backend/
+└── media/
+    └── productos/
+        ├── imagen1.jpg
+        ├── imagen2.jpg
+        └── ...
+```
+
+> Las imágenes no se almacenan directamente en el repositorio debido a su cantidad y tamaño.
+
+---
 
 ## Documentación
 
@@ -552,18 +589,28 @@ La carpeta `docs/` contiene documentación adicional relacionada con el proyecto
 docs/
 ```
 
-En esta carpeta se pueden incorporar diagramas, documentación técnica, decisiones de diseño y demás material complementario.
+En esta carpeta se pueden incorporar:
+
+* Diagramas.
+* Documentación técnica.
+* Diagramas de arquitectura.
+* Diagramas de base de datos.
+* Decisiones de diseño.
+* Documentación de análisis.
+* Material complementario del proyecto.
+
+---
 
 ## Análisis de datos
 
 El proyecto incorpora diferentes técnicas de minería de datos y análisis, entre ellas:
 
-* K-Means para segmentación de clientes.
-* Apriori para descubrimiento de reglas de asociación.
-* Análisis de demanda.
-* Análisis de productos más vendidos.
-* Análisis de categorías.
-* Generación de información para recomendaciones.
+* **K-Means:** segmentación de clientes.
+* **Apriori:** descubrimiento de reglas de asociación.
+* **Análisis de demanda.**
+* **Análisis de productos más vendidos.**
+* **Análisis de categorías.**
+* **Generación de información para recomendaciones.**
 
 La actualización de los datos utilizados por los módulos de analítica se realiza mediante:
 
@@ -571,11 +618,11 @@ La actualización de los datos utilizados por los módulos de analítica se real
 python manage.py actualizar_analitica
 ```
 
+---
+
 ## Usuarios de prueba
 
-La instalación mediante seeds genera usuarios de prueba.
-
-Los datos concretos de acceso serán documentados aquí una vez definidos.
+La instalación mediante seeds permite generar usuarios y clientes de prueba.
 
 ### Administrador
 
@@ -591,13 +638,17 @@ Usuario: [PENDIENTE]
 Contraseña: [PENDIENTE]
 ```
 
-> Para una instalación local se recomienda cambiar las credenciales de prueba después de iniciar el sistema.
+> Las credenciales de prueba deben modificarse en entornos reales y no deben utilizarse para instalaciones destinadas a producción.
+
+---
 
 ## Estado del proyecto
 
 El sistema se encuentra en desarrollo activo.
 
-Las funcionalidades principales de comercio electrónico, administración y análisis se encuentran implementadas, mientras que determinados procesos auxiliares de generación de datos y documentación continúan en desarrollo.
+Las funcionalidades principales de comercio electrónico, administración y análisis se encuentran implementadas, mientras que determinados procesos auxiliares de generación de datos, documentación y configuración continúan en desarrollo.
+
+---
 
 ## Licencia
 

@@ -1,0 +1,158 @@
+.pedidos-shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 20px 3rem;
+}
+
+.pedidos-header {
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  background: linear-gradient(135deg, #fff 0%, #f1f6ff 100%);
+  border: 1px solid #e1e9f5;
+  border-radius: 1rem;
+  box-shadow: 0 .25rem 1rem rgba(32, 41, 56, .05);
+}
+
+.pedidos-eyebrow {
+  margin: 0 0 .35rem;
+  color: #0d6efd;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.pedidos-header h1 {
+  margin: 0;
+  color: #202938;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+}
+
+.pedidos-subtitle {
+  margin: .4rem 0 0;
+  color: #657080;
+}
+
+.pedidos-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.pedido-card {
+  background: #fff;
+  border: 1px solid #e7ecf3;
+  border-radius: 1rem;
+  box-shadow: 0 .25rem 1rem rgba(32, 41, 56, .05);
+}
+
+.pedido-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.2rem 1.25rem;
+}
+
+.pedido-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.pedido-heading p,
+.pedido-heading h3 {
+  margin: 0;
+}
+
+.pedido-id {
+  color: #0d6efd;
+  font-weight: 700;
+  margin-bottom: .25rem !important;
+}
+
+.pedido-date {
+  color: #657080;
+  font-size: .92rem;
+  margin-top: .2rem !important;
+}
+
+.pedido-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pedido-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #202938;
+}
+
+.pedido-total span {
+  font-size: .8rem;
+  color: #657080;
+}
+
+.pedido-total strong {
+  font-size: 1.05rem;
+}
+
+.pedido-actions {
+  display: flex;
+  align-items: center;
+}
+
+.state-card {
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 1rem;
+  background: #fff;
+  border: 1px solid #e7ecf3;
+  box-shadow: 0 .25rem 1rem rgba(32, 41, 56, .05);
+}
+
+.state-card-error {
+  border-color: #f5c2c7;
+  background: #fff5f5;
+}
+
+.state-card-empty {
+  border-color: #b6d4fe;
+  background: #f8fbff;
+}
+
+.pedido-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.25rem;
+  padding: 1rem 0 0;
+}
+
+.pagination-label {
+  font-weight: 600;
+  color: #202938;
+}
+
+@media (max-width: 768px) {
+  .pedido-card-body,
+  .pedido-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pedido-summary {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pedido-pagination {
+    flex-direction: column;
+    gap: .75rem;
+  }
+}

@@ -1,0 +1,135 @@
+# =========================================================
+# SISTEMA OPERATIVO
+# =========================================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# =========================================================
+# PYTHON / DJANGO
+# =========================================================
+
+# Bytecode de Python
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos compilados
+*.pyo
+*.pyd
+
+# Entornos virtuales
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Base de datos SQLite
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Archivos temporales de Django/Python
+*.pid
+
+# =========================================================
+# DJANGO - ARCHIVOS GENERADOS
+# =========================================================
+
+# Media generada por la aplicación
+backend/media/
+
+# Archivos estáticos generados
+backend/staticfiles/
+
+# =========================================================
+# ANGULAR / NODE
+# =========================================================
+
+# Dependencias
+node_modules/
+
+# Build de Angular
+dist/
+
+# Caché de Angular
+.angular/
+
+# Cobertura de tests
+coverage/
+
+# Cachés de npm
+.npm/
+
+# Cachés generales
+.cache/
+
+# =========================================================
+# EDITORES / IDE
+# =========================================================
+
+# Visual Studio Code
+.vscode/
+
+# JetBrains
+.idea/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# =========================================================
+# TYPESCRIPT / JAVASCRIPT
+# =========================================================
+
+# Source maps generados
+*.js.map
+
+# =========================================================
+# ARCHIVOS TEMPORALES
+# =========================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+
+# =========================================================
+# ARCHIVOS DE TEST / COBERTURA GENERADOS
+# =========================================================
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================================================
+# ARCHIVOS DE SISTEMA / BACKUPS
+# =========================================================
+
+*.stackdump

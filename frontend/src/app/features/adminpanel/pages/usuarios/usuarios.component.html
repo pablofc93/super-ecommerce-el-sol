@@ -1,0 +1,160 @@
+<div class="container">
+
+  <h2 class="mb-4">Gestión de Usuarios</h2>
+
+  <!-- ========================= -->
+  <!-- CREAR USUARIO -->
+  <!-- ========================= -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="mb-3">Crear Nuevo Usuario</h5>
+
+      <div class="row g-3">
+
+        <div class="col-md-3">
+          <input
+            class="form-control"
+            placeholder="Username"
+            [(ngModel)]="nuevoUsuario.username">
+        </div>
+
+        <div class="col-md-3">
+          <input
+            class="form-control"
+            placeholder="Email"
+            [(ngModel)]="nuevoUsuario.email">
+        </div>
+
+        <div class="col-md-3">
+          <input
+            type="password"
+            class="form-control"
+            placeholder="Password"
+            [(ngModel)]="nuevoUsuario.password">
+        </div>
+
+        <div class="col-md-2">
+          <select
+            class="form-select"
+            [(ngModel)]="nuevoUsuario.tipo_usuario">
+            <option value="cliente">Cliente</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+
+        <div class="col-md-1">
+          <button
+            class="btn btn-success w-100"
+            (click)="crearUsuario()">
+            Crear
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================= -->
+  <!-- BUSCADOR -->
+  <!-- ========================= -->
+  <div class="mb-3">
+    <input
+      class="form-control"
+      placeholder="Buscar por username o email..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="buscar()">
+  </div>
+
+  <!-- ========================= -->
+  <!-- TABLA -->
+  <!-- ========================= -->
+  <div class="card">
+    <div class="card-body">
+
+      <!-- LOADING -->
+      <div *ngIf="loading" class="text-center my-3">
+        <div class="spinner-border"></div>
+      </div>
+
+      <!-- TABLA -->
+      <table class="table table-striped"
+             *ngIf="!loading && usuarios.length > 0">
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let user of usuarios">
+
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+
+            <td>
+              <span class="badge"
+                [ngClass]="{
+                  'bg-primary': user.tipo_usuario === 'admin',
+                  'bg-secondary': user.tipo_usuario === 'cliente'
+                }">
+                {{ user.tipo_usuario }}
+              </span>
+            </td>
+
+            <td>
+              <button
+                class="btn btn-warning btn-sm me-2"
+                (click)="cambiarRol(user)">
+                Cambiar Rol
+              </button>
+
+              <button
+                class="btn btn-danger btn-sm"
+                (click)="abrirModalEliminar(user.id)">
+                Eliminar
+              </button>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SIN RESULTADOS -->
+      <div *ngIf="!loading && usuarios.length === 0"
+           class="text-center text-muted">
+        No hay usuarios para mostrar.
+      </div>
+
+      <!-- INFO TOTAL -->
+      <div class="mt-3 text-center" *ngIf="totalUsuarios > 0">
+        Mostrando {{ usuarios.length }} de {{ totalUsuarios }} usuarios
+      </div>
+
+      <!-- ========================= -->
+      <!-- PAGINACIÓN -->
+      <!-- ========================= -->
+      <app-pagination
+        class="mt-3"
+        [paginaActual]="paginaActual"
+        [totalPaginas]="totalPaginas"
+        (paginaChange)="cambiarPagina($event)">
+    </app-pagination>
+
+    </div>
+  </div>
+
+  <!-- ========================= -->
+  <!-- MODAL -->
+  <!-- ========================= -->
+  <app-modal-confirmacion *ngIf="usuarioAEliminar" titulo="Eliminar usuario"
+    mensaje="¿Seguro que deseas eliminar este usuario?" (confirmar)="confirmarEliminacion()"
+    (cancelar)="usuarioAEliminar = null">
+  </app-modal-confirmacion>
+  
+  </div>

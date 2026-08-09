@@ -1,0 +1,22 @@
+<div class="public-layout">
+
+  <!-- NAVBAR GLOBAL -->
+  <app-navbar></app-navbar>
+
+  <!-- SIDEBAR GLOBAL -->
+  <app-sidebar-categorias
+    *ngIf="showSidebar"
+    [categorias]="categorias">
+  </app-sidebar-categorias>
+
+  <!-- CONTENIDO -->
+  <main class="public-content container-fluid">
+
+    <router-outlet></router-outlet>
+
+  </main>
+
+  <!-- FOOTER -->
+  <app-footer></app-footer>
+
+</div>

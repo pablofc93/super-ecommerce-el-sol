@@ -1,0 +1,43 @@
+<h4>🕓 Historial de reportes</h4>
+
+<div *ngIf="loading">Cargando...</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  {{ error }}
+</div>
+
+<div *ngIf="!loading && reportes.length > 0">
+
+  <p class="text-muted">
+    Mostrando página {{ paginaActual }} — Total: {{ totalRegistros }} registros
+  </p>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Tipo</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let r of reportes">
+        <td>{{ getTipoLabel(r.tipo) }}</td>
+        <td>{{ r.fecha_generacion | date:'medium' }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 🔥 PAGINACIÓN REUTILIZABLE -->
+  <app-pagination
+    class="mt-3"
+    [paginaActual]="paginaActual"
+    [totalPaginas]="totalPaginas"
+    (paginaChange)="cambiarPagina($event)">
+  </app-pagination>
+
+</div>
+
+<div *ngIf="!loading && reportes.length === 0" class="alert alert-info">
+  No hay reportes
+</div>

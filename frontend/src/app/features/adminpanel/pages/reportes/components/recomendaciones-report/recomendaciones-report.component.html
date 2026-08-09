@@ -1,0 +1,42 @@
+<h4>🤖 Reglas de asociación</h4>
+
+<div *ngIf="loading">Cargando...</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  {{ error }}
+</div>
+
+<ul *ngIf="!loading && reglas.length > 0">
+
+  <li *ngFor="let r of reglas">
+
+    {{ r.base }} → {{ r.recomendado }}
+
+    (conf: {{ r.confianza | number:'1.2-2' }})
+
+  </li>
+
+</ul>
+
+<!-- INFO PAGINACIÓN -->
+<p class="text-muted" *ngIf="!loading && reglas.length > 0">
+
+  Mostrando página {{ paginaActual }}
+
+  — Total: {{ totalRegistros }} registros
+
+</p>
+
+<!-- PAGINACIÓN REUTILIZABLE -->
+<app-pagination
+  *ngIf="!loading && totalPaginas > 1"
+  class="mt-3"
+  [paginaActual]="paginaActual"
+  [totalPaginas]="totalPaginas"
+  (paginaChange)="cambiarPagina($event)">
+</app-pagination>
+
+<!-- SIN DATOS -->
+<div *ngIf="!loading && reglas.length === 0" class="alert alert-info">
+  No hay recomendaciones
+</div>

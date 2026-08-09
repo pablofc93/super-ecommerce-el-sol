@@ -1,0 +1,343 @@
+<header class="navbar-header text-white sticky-top shadow">
+
+
+  <nav class="navbar navbar-expand-lg navbar-dark container py-3">
+
+
+    <!-- LOGO -->
+
+    <a
+      routerLink="/"
+      class="navbar-brand ecommerce-logo"
+      (click)="cerrarMenu()">
+
+      <i class="bi bi-brightness-high-fill"></i>
+
+      Super El Sol
+
+    </a>
+
+
+
+
+    <!-- BOTÓN HAMBURGUESA -->
+
+    <button
+      class="navbar-toggler"
+      type="button"
+      (click)="menuAbierto = !menuAbierto"
+      aria-label="Abrir menú">
+
+      <span class="navbar-toggler-icon"></span>
+
+    </button>
+
+
+
+
+    <!-- MENU -->
+
+    <div
+      class="collapse navbar-collapse"
+      [class.show]="menuAbierto">
+
+
+      <nav class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+
+
+
+        <!-- ========================= -->
+        <!-- GENERALES -->
+        <!-- ========================= -->
+
+
+        <a
+          routerLink="/"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{exact:true}"
+          class="nav-link ecommerce-link"
+          (click)="cerrarMenu()">
+
+          <i class="bi bi-house"></i>
+
+          Inicio
+
+        </a>
+
+
+
+
+        <a
+          routerLink="/productos"
+          class="nav-link ecommerce-link"
+          [class.active-link]="esVistaProductos"
+          (click)="cerrarMenu()">
+
+
+          <i class="bi bi-bag"></i>
+
+          Productos
+
+
+        </a>
+
+
+
+
+        <button
+          type="button"
+          class="nav-link ecommerce-link categoria-btn"
+          [class.active-link]="esVistaCategorias"
+          (click)="abrirCategorias()">
+
+          <i class="bi bi-tags"></i>
+
+          Categorías
+        </button>
+
+
+
+
+
+        <!-- ========================= -->
+        <!-- USUARIO LOGUEADO -->
+        <!-- ========================= -->
+
+
+        <ng-container *ngIf="isLoggedIn; else guest">
+
+
+
+          <!-- CLIENTE -->
+
+          <ng-container *ngIf="isCliente">
+
+
+            <a
+              routerLink="/carrito"
+              routerLinkActive="active-link"
+              [routerLinkActiveOptions]="{exact:true}"
+              class="nav-link ecommerce-link carrito-link"
+              (click)="cerrarMenu()">
+
+
+              <span class="carrito-icono">
+
+
+                <i class="bi bi-cart3"></i>
+
+
+                <span
+                  *ngIf="cantidadCarrito > 0"
+                  class="carrito-badge">
+
+
+                  {{cantidadCarrito}}
+
+
+                </span>
+
+
+              </span>
+
+
+              Carrito
+
+
+            </a>
+
+
+
+
+            <a
+              routerLink="/mis-pedidos"
+              routerLinkActive="active-link"
+              [routerLinkActiveOptions]="{exact:true}"
+              class="nav-link ecommerce-link"
+              (click)="cerrarMenu()">
+
+
+              <i class="bi bi-box-seam"></i>
+
+              Mis pedidos
+
+
+            </a>
+
+
+
+          </ng-container>
+
+
+
+
+
+
+          <!-- ADMIN -->
+
+          <a
+            *ngIf="isAdmin"
+            routerLink="/admin/dashboard"
+            class="btn admin-btn"
+            (click)="cerrarMenu()">
+
+
+
+            <i class="bi bi-speedometer2"></i>
+
+            Panel Admin
+
+
+
+          </a>
+
+
+
+
+
+
+
+
+          <!-- USUARIO -->
+
+          <div class="dropdown usuario-dropdown">
+
+
+            <button
+              class="btn usuario-btn dropdown-toggle"
+              type="button"
+              data-bs-toggle="dropdown">
+
+
+              <i class="bi bi-person-circle"></i>
+
+
+              {{currentUser?.username}}
+
+
+            </button>
+
+
+
+            <ul class="dropdown-menu dropdown-menu-end">
+
+
+              <li *ngIf="isCliente">
+
+
+                <a
+                  routerLink="/clientes/perfil"
+                  class="dropdown-item">
+
+
+                  <i class="bi bi-person"></i>
+
+                  Mi perfil
+
+
+                </a>
+
+
+              </li>
+
+
+
+              <li>
+
+
+                <hr class="dropdown-divider">
+
+
+              </li>
+
+
+
+              <li>
+
+
+                <button
+                  class="dropdown-item text-danger"
+                  (click)="logout()">
+
+
+
+                  <i class="bi bi-box-arrow-right"></i>
+
+                  Cerrar sesión
+
+
+
+                </button>
+
+
+              </li>
+
+
+            </ul>
+
+
+          </div>
+
+
+
+
+        </ng-container>
+
+
+
+
+
+
+        <!-- ========================= -->
+        <!-- INVITADO -->
+        <!-- ========================= -->
+
+
+        <ng-template #guest>
+
+
+          <a
+            routerLink="/auth/login"
+            class="btn login-btn"
+            (click)="cerrarMenu()">
+
+
+            <i class="bi bi-person"></i>
+
+            Ingresar
+
+
+          </a>
+
+
+
+
+          <a
+            routerLink="/auth/register"
+            class="btn register-btn"
+            (click)="cerrarMenu()">
+
+
+            <i class="bi bi-person-plus"></i>
+
+            Crear cuenta
+
+
+          </a>
+
+
+
+        </ng-template>
+
+
+
+      </nav>
+
+
+    </div>
+
+
+  </nav>
+
+
+</header>

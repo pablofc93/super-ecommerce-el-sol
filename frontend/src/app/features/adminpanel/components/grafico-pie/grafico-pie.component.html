@@ -1,0 +1,20 @@
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <h5>{{ titulo }}</h5>
+
+    <div
+      style="
+        height: 450px;
+        position: relative;
+      "
+    >
+      <canvas
+        baseChart
+        [data]="pieChartData"
+        [type]="'pie'">
+      </canvas>
+    </div>
+
+  </div>
+</div>

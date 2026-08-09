@@ -1,0 +1,110 @@
+<main class="home-page">
+  <div class="container py-4 py-lg-5">
+    <section class="home-hero">
+      <p class="home-eyebrow">Compra simple, todos los días</p>
+      <h1>Bienvenido a Super El Sol</h1>
+      <p>Tu supermercado online de confianza. Encontrá tus productos favoritos en un solo lugar.</p>
+    </section>
+
+    <div *ngIf="loading" class="home-loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando productos...</span>
+      </div>
+    </div>
+
+    <div *ngIf="error" class="alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+
+    <section *ngIf="productosMasVendidos.length > 0 && !loading" class="home-section featured-section">
+      <header class="home-section-header">
+        <div>
+          <p class="section-eyebrow">Elegidos por nuestros clientes</p>
+          <h2>Productos más vendidos</h2>
+        </div>
+      </header>
+
+      <div class="carousel-manual carousel-smooth">
+        <div class="carousel-track"
+             [class.carousel-slide-right]="animacionMasVendidos === 'right'"
+             [class.carousel-slide-left]="animacionMasVendidos === 'left'">
+          <article class="featured-product-card" *ngIf="obtenerProductoActualMasVendido() as producto">
+            <div class="featured-product-media">
+              <img [src]="producto.imagen_url || 'assets/no-image.png'" [alt]="producto.nombre" />
+            </div>
+
+            <div class="featured-product-content">
+              <div class="featured-product-topbar">
+                <span class="featured-product-badge">Más vendido</span>
+                <span class="featured-product-counter">{{ indiceActualMasVendidos + 1 }} / {{ productosMasVendidos.length }}</span>
+              </div>
+
+              <h3>{{ producto.nombre }}</h3>
+              <p>{{ producto.descripcion }}</p>
+
+              <div class="featured-product-meta">
+                <span class="badge text-bg-light border text-dark" *ngIf="producto.categoria">
+                  {{ producto.categoria.nombre }}
+                </span>
+                <span class="badge text-bg-success" *ngIf="producto.stock > 0">Disponible</span>
+                <span class="badge text-bg-danger" *ngIf="producto.stock === 0">Sin stock</span>
+              </div>
+
+              <div class="featured-product-footer">
+                <strong>${{ producto.precio | number: '1.0-2' }}</strong>
+                <button class="btn btn-primary" type="button" (click)="verDetalle(producto.id)">
+                  Ver producto
+                </button>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <button class="carousel-control-prev carousel-control-minimal" type="button" (click)="moverMasVendidosIzquierda()" aria-label="Ver productos anteriores">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next carousel-control-minimal" type="button" (click)="moverMasVendidosDerecha()" aria-label="Ver productos siguientes">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      </div>
+    </section>
+
+    <section *ngFor="let categoria of categoriasVisiblesLista; let idx = index" class="home-section">
+      <header class="home-section-header">
+        <div>
+          <p class="section-eyebrow">Explorá la categoría</p>
+          <h2>{{ categoria.categoria }}</h2>
+        </div>
+      </header>
+
+      <div class="carousel-manual carousel-smooth">
+        <div class="carousel-track"
+             [class.carousel-slide-right]="animacionesCategorias.get(idx) === 'right'"
+             [class.carousel-slide-left]="animacionesCategorias.get(idx) === 'left'">
+          <div class="row g-4">
+            <div class="col-12 col-sm-6 col-lg-3" *ngFor="let producto of obtenerGrupoActualCategoria(idx)">
+              <app-product-card
+                [producto]="producto"
+                variant="compact"
+                (verDetalle)="verDetalle($event)">
+              </app-product-card>
+            </div>
+          </div>
+        </div>
+
+        <button class="carousel-control-prev carousel-control-minimal" type="button" (click)="moverCategoriaIzquierda(idx)" aria-label="Ver productos anteriores">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next carousel-control-minimal" type="button" (click)="moverCategoriaDerecha(idx)" aria-label="Ver productos siguientes">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      </div>
+    </section>
+
+    <div class="text-center" *ngIf="categoriasVisibles < categoriasConProductos.length">
+      <button class="btn btn-outline-primary px-4 home-more-button" (click)="mostrarMasCategorias()">
+        Ver más categorías
+      </button>
+    </div>
+  </div>
+</main>

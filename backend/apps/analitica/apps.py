@@ -1,0 +1,8 @@
+# apps/analitica/apps.py
+from django.apps import AppConfig
+
+class AnaliticaConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.analitica'
+    verbose_name = 'Analítica y Minería de Datos'
+

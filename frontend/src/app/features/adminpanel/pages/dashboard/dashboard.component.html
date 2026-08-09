@@ -1,0 +1,190 @@
+<div *ngIf="cargando" class="text-center mt-5">
+  <div class="spinner-border"></div>
+</div>
+
+<div *ngIf="data as d">
+
+  <!-- KPI -->
+  <div class="row mb-4">
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Productos" [valor]="d.kpis.total_productos">
+      </app-kpi-card>
+    </div>
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Categorías" [valor]="d.kpis.total_categorias">
+      </app-kpi-card>
+    </div>
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Categorías activas" [valor]="d.kpis.categorias_activas">
+      </app-kpi-card>
+    </div>
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Clientes" [valor]="d.kpis.total_clientes">
+      </app-kpi-card>
+    </div>
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Ventas $" [valor]="d.kpis.ventas_totales">
+      </app-kpi-card>
+    </div>
+
+    <div class="col-md-4 col-sm-6 mb-3 d-flex">
+      <app-kpi-card class="w-100 h-100" titulo="Pedidos" [valor]="d.kpis.total_pedidos">
+      </app-kpi-card>
+    </div>
+
+  </div>
+
+  <!-- TABS -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item" *ngFor="let tab of tabs">
+      <button
+        class="nav-link"
+        [class.active]="tabActivo === tab.key"
+        (click)="cambiarTab(tab.key)">
+
+        <i class="bi me-2" [ngClass]="tab.icon"></i>
+        {{ tab.label }}
+
+      </button>
+    </li>
+  </ul>
+
+  <div [ngSwitch]="tabActivo">
+
+    <!-- PRODUCTOS -->
+    <div *ngSwitchCase="'productos'" class="row">
+      <div class="col-12">
+        <app-grafico-bar
+          [labels]="productosLabels"
+          [data]="productosData"
+          titulo="Productos más vendidos">
+        </app-grafico-bar>
+      </div>
+    </div>
+
+    <!-- CATEGORÍAS -->
+    <div *ngSwitchCase="'categorias'" class="row justify-content-center mb-5">
+      <div class="col-md-8 col-lg-6">
+        <div class="w-100" style="height: 500px;">
+          <app-grafico-pie
+            [labels]="categoriasLabels"
+            [data]="categoriasData"
+            titulo="Categorías más movidas">
+          </app-grafico-pie>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div *ngSwitchCase="'clientes'" class="row">
+      <div class="col-12">
+        <app-grafico-bar
+          [labels]="clientesLabels"
+          [data]="clientesData"
+          [titulo]="'Segmentación de clientes'"
+          [colores]="clientesColors"
+          [extraInfo]="clientesExtraInfo"
+          [separarDatasets]="true">
+        </app-grafico-bar>
+      </div>
+    </div>
+
+    <!-- PEDIDOS -->
+    <div *ngSwitchCase="'pedidos'" class="row justify-content-center mb-5">
+      <div class="col-md-8 col-lg-6">
+        <div class="w-100" style="height: 500px;">
+          <app-grafico-pie
+            [labels]="estadosLabels"
+            [data]="estadosData"
+            titulo="Estado de pedidos">
+          </app-grafico-pie>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGLAS -->
+    <div *ngSwitchCase="'reglas'" class="row">
+
+      <div class="col-12 mb-4">
+        <app-grafico-bar
+          [labels]="reglasLabels"
+          [data]="reglasConfianzaData"
+          titulo="Confianza reglas de asociación">
+        </app-grafico-bar>
+      </div>
+
+      <div class="col-12 mb-4">
+        <app-grafico-bar
+          [labels]="reglasLabels"
+          [data]="reglasLiftData"
+          titulo="Lift reglas de asociación">
+        </app-grafico-bar>
+      </div>
+
+    </div>
+
+    <!-- VENTAS -->
+    <div *ngSwitchCase="'ventas'" class="row">
+
+      <div class="col-12 mb-4">
+        <app-grafico-bar
+          [labels]="ventasLabels"
+          [data]="ventasData"
+          titulo="Productos vendidos por mes">
+        </app-grafico-bar>
+      </div>
+
+      <div class="col-12 mb-4">
+        <app-grafico-bar
+          [labels]="ingresosLabels"
+          [data]="ingresosData"
+          titulo="Ingresos por mes ($)">
+        </app-grafico-bar>
+      </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- KPIs POR PROVINCIA -->
+    <!-- ========================= -->
+    <div *ngSwitchCase="'provincias'" class="row">
+
+      <!-- CLIENTES -->
+      <div class="col-12 mb-4 d-flex justify-content-center">
+        <div style="width: 750px;">
+          <app-grafico-pie
+            [labels]="provinciasLabels"
+            [data]="clientesProvinciaData"
+            titulo="Cantidad de clientes por provincia">
+          </app-grafico-pie>
+        </div>
+      </div>
+
+      <!-- VENTAS -->
+      <div class="col-12 mb-4">
+        <app-grafico-bar
+          [labels]="ventasProvinciaLabels"
+          [data]="ventasProvinciaData"
+          titulo="Ventas por provincia ($)">
+        </app-grafico-bar>
+      </div>
+
+      <!-- TICKET -->
+      <div class="col-12 mb-5">
+        <app-grafico-bar
+          [labels]="ticketProvinciaLabels"
+          [data]="ticketProvinciaData"
+          titulo="Ingreso promedio por cliente registrado según provincia ($)">
+        </app-grafico-bar>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

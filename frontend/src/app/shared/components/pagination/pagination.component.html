@@ -1,0 +1,116 @@
+<nav *ngIf="totalPaginas > 1">
+
+    <ul class="pagination justify-content-center">
+
+        <!-- Anterior -->
+
+        <li
+            class="page-item"
+            [class.disabled]="paginaActual === 1">
+
+            <button
+                class="page-link"
+                (click)="cambiarPagina(paginaActual - 1)">
+
+                Anterior
+
+            </button>
+
+        </li>
+
+        <!-- Primera -->
+
+        <li
+            class="page-item"
+            *ngIf="mostrarPrimeraPagina()">
+
+            <button
+                class="page-link"
+                (click)="cambiarPagina(1)">
+
+                1
+
+            </button>
+
+        </li>
+
+        <!-- ... -->
+
+        <li
+            class="page-item disabled"
+            *ngIf="mostrarPuntosInicio()">
+
+            <span class="page-link">
+
+                ...
+
+            </span>
+
+        </li>
+
+        <!-- Páginas visibles -->
+
+        <li
+            class="page-item"
+            *ngFor="let pagina of paginas"
+            [class.active]="pagina===paginaActual">
+
+            <button
+                class="page-link"
+                (click)="cambiarPagina(pagina)">
+
+                {{ pagina }}
+
+            </button>
+
+        </li>
+
+        <!-- ... -->
+
+        <li
+            class="page-item disabled"
+            *ngIf="mostrarPuntosFin()">
+
+            <span class="page-link">
+
+                ...
+
+            </span>
+
+        </li>
+
+        <!-- Última -->
+
+        <li
+            class="page-item"
+            *ngIf="mostrarUltimaPagina()">
+
+            <button
+                class="page-link"
+                (click)="cambiarPagina(totalPaginas)">
+
+                {{ totalPaginas }}
+
+            </button>
+
+        </li>
+
+        <!-- Siguiente -->
+
+        <li
+            class="page-item"
+            [class.disabled]="paginaActual===totalPaginas">
+
+            <button
+                class="page-link"
+                (click)="cambiarPagina(paginaActual+1)">
+
+                Siguiente
+
+            </button>
+
+        </li>
+
+    </ul>
+
+</nav>

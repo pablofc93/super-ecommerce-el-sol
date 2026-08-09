@@ -1,0 +1,106 @@
+.product-detail-page {
+  min-height: calc(100vh - 72px);
+  background: #f6f8fb;
+}
+
+.detail-loading {
+  display: grid;
+  min-height: 50vh;
+  place-items: center;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #0d6efd;
+  font-size: .94rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover { text-decoration: underline; }
+
+.product-image-panel {
+  display: grid;
+  min-height: 420px;
+  padding: 2rem;
+  place-items: center;
+  background: #fff;
+  border: 1px solid #e9edf3;
+  border-radius: 1rem;
+  box-shadow: 0 .25rem 1rem rgba(32, 41, 56, .05);
+}
+
+.product-image {
+  width: 100%;
+  max-height: 440px;
+  object-fit: contain;
+}
+
+.product-category {
+  margin-bottom: .6rem;
+  color: #0d6efd;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.product-title {
+  margin-bottom: 1rem;
+  color: #202938;
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+.product-description {
+  margin-bottom: 1.4rem;
+  color: #657080;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.product-price {
+  margin-bottom: 1.15rem;
+  color: #0d6efd;
+  font-size: clamp(1.8rem, 3vw, 2.25rem);
+  font-weight: 750;
+}
+
+.product-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1.5rem;
+}
+
+.product-meta .badge { padding: .55rem .7rem; font-size: .8rem; font-weight: 600; }
+
+.purchase-card {
+  padding: 1.35rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: .9rem;
+  box-shadow: 0 .3rem 1rem rgba(32, 41, 56, .06);
+}
+
+.purchase-card h2 {
+  margin: 0 0 .3rem;
+  color: #202938;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.purchase-card > p { margin-bottom: 1.2rem; color: #6c757d; font-size: .9rem; }
+.purchase-card .form-label { color: #4c5767; font-size: .9rem; font-weight: 600; }
+.add-to-cart-button { min-height: 42px; font-weight: 600; }
+
+@media (max-width: 991.98px) {
+  .product-image-panel { min-height: 330px; }
+}
+
+@media (max-width: 575.98px) {
+  .product-image-panel { min-height: 260px; padding: 1.25rem; }
+  .purchase-card { padding: 1.1rem; }
+}

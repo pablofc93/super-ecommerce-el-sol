@@ -1,0 +1,153 @@
+<app-sidebar-categorias
+  *ngIf="!vistaCategorias"
+  [categorias]="categorias"
+  [categoriaSeleccionada]="categoriaSeleccionada"
+  (categoriaChange)="filtrarCategoria($event)">
+</app-sidebar-categorias>
+
+<div class="catalogo-productos mt-4" *ngIf="!vistaCategorias">
+
+  <header class="catalogo-header">
+    <div>
+      <p class="catalogo-eyebrow">Nuestra selección</p>
+      <h1>{{ nombreCategoriaActual }}</h1>
+      <p class="catalogo-subtitle">Encontrá los productos que necesitás, elegidos para vos.</p>
+    </div>
+  </header>
+
+  <!-- LOADING -->
+  <div *ngIf="loading">
+    Cargando...
+  </div>
+
+  <!-- ERROR -->
+  <div
+    *ngIf="error"
+    class="alert alert-danger">
+
+    {{ error }}
+
+  </div>
+
+  <!-- VACÍO -->
+  <div
+    *ngIf="!loading && !error && productosFiltrados.length === 0">
+
+    No hay productos disponibles.
+
+  </div>
+
+  <!-- GRID -->
+  <app-product-grid
+    *ngIf="!loading && !error"
+    [productos]="productosVisiblesLista"
+    (verDetalle)="verDetalle($event)">
+  </app-product-grid>
+
+  <!-- MOSTRAR MÁS -->
+  <div
+    class="text-center mt-4 mb-5"
+    *ngIf="
+      !loading &&
+      !error &&
+      productosVisibles < productosFiltrados.length
+    ">
+
+    <button
+      class="btn btn-outline-primary px-4"
+      (click)="mostrarMasProductos()">
+
+      Mostrar más
+
+    </button>
+
+  </div>
+
+</div>
+
+<div class="catalogo-productos mt-4" *ngIf="vistaCategorias">
+  <header class="catalogo-header categorias-header">
+    <div>
+      <p class="catalogo-eyebrow">Explorá por sección</p>
+      <h1>Categorías destacadas</h1>
+      <p class="catalogo-subtitle">Descubrí una selección de productos de cada categoría.</p>
+    </div>
+  </header>
+
+  <div *ngIf="loading">
+    Cargando categorías...
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && !error">
+    <section *ngFor="let categoria of categoriasVisiblesLista; let i = index" class="catalogo-category-section">
+      
+
+      <div class="categoria-container category-carousel">
+
+        <header class="category-section-header">
+          <p>Explorá la categoría</p>
+          <h2>
+          {{ categoria.categoria }}
+          </h2>
+        </header>
+
+        <div class="carousel-manual">
+
+          <div class="carousel-track"
+               [class.carousel-slide-right]="animacionesCategorias.get(i) === 'right'"
+               [class.carousel-slide-left]="animacionesCategorias.get(i) === 'left'">
+
+            <div class="row g-4">
+
+              <div
+                class="col-md-6 col-lg-3"
+                *ngFor="let producto of obtenerGrupoActualCategoria(i)"
+              >
+
+                <app-product-card
+                  [producto]="producto"
+                  variant="compact"
+                  (verDetalle)="verDetalle($event)"
+                >
+                </app-product-card>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <button
+            class="carousel-control-prev carousel-control-minimal"
+            (click)="moverCategoriaIzquierda(i)"
+            type="button">
+
+            <span class="carousel-control-prev-icon"></span>
+
+          </button>
+
+          <button
+            class="carousel-control-next carousel-control-minimal"
+            (click)="moverCategoriaDerecha(i)"
+            type="button">
+
+            <span class="carousel-control-next-icon"></span>
+
+          </button>
+
+        </div>
+
+      </div>
+    </section>
+
+    <div class="text-center mt-4 mb-5" *ngIf="categoriasVisibles < categoriasConProductos.length">
+      <button class="btn btn-outline-primary px-4" (click)="mostrarMasCategorias()">
+        Ver más categorías
+      </button>
+    </div>
+  </div>
+</div>

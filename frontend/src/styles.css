@@ -1,0 +1,18 @@
+/* ==========================================
+   ESTILOS GLOBALES
+========================================== */
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    min-height: 100vh;
+}
+
+app-root {
+    display: block;
+    min-height: 100vh;
+}

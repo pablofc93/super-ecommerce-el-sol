@@ -1,0 +1,113 @@
+<div class="container mt-4">
+
+  <h2 class="mb-4 text-center">Mi Perfil</h2>
+
+  <!-- ========================= -->
+  <!-- DATOS -->
+  <!-- ========================= -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+      Datos personales
+    </div>
+
+    <div class="card-body">
+      <form (ngSubmit)="guardarPerfil()">
+
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="user.username"
+            name="username"
+            placeholder="Ingrese su username"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input
+            type="email"
+            class="form-control"
+            [(ngModel)]="user.email"
+            name="email"
+            placeholder="Ingrese su email"
+          />
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary">
+            Guardar cambios
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================= -->
+  <!-- PASSWORD -->
+  <!-- ========================= -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-danger text-white">
+      Cambiar contraseña
+    </div>
+
+    <div class="card-body">
+      <form (ngSubmit)="cambiarPassword()">
+
+        <div class="mb-3">
+          <label class="form-label">Contraseña actual</label>
+          <input
+            type="password"
+            class="form-control"
+            [(ngModel)]="passwordData.current_password"
+            name="current_password"
+            placeholder="Ingrese su contraseña actual"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Nueva contraseña</label>
+          <input
+            type="password"
+            class="form-control"
+            [(ngModel)]="passwordData.new_password"
+            name="new_password"
+            placeholder="Ingrese la nueva contraseña"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Repetir contraseña</label>
+          <input
+            type="password"
+            class="form-control"
+            [(ngModel)]="passwordData.confirm_password"
+            name="confirm_password"
+            placeholder="Repita la nueva contraseña"
+          />
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-danger">
+            Cambiar contraseña
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================= -->
+  <!-- MENSAJES -->
+  <!-- ========================= -->
+  <div *ngIf="message" class="alert alert-success text-center">
+    {{ message }}
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger text-center">
+    {{ error }}
+  </div>
+
+</div>

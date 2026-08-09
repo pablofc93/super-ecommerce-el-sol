@@ -1,0 +1,119 @@
+<main class="checkout-page" *ngIf="!loading">
+  <div class="container py-4 py-lg-5">
+    <header class="checkout-header">
+      <div>
+        <p class="checkout-eyebrow">Compra segura</p>
+        <h1>Mi carrito</h1>
+        <p class="checkout-subtitle">Revisá tus productos y confirmá tu pago.</p>
+      </div>
+      <a routerLink="/productos" class="btn btn-outline-primary">
+        Seguir comprando
+      </a>
+    </header>
+
+    <div *ngIf="mensajeExito" class="alert alert-success checkout-alert" role="alert">
+      <strong>{{ mensajeExito }}</strong>
+      <span>Serás redirigido en unos segundos...</span>
+    </div>
+
+    <ng-container *ngIf="carrito as c">
+      <section *ngIf="c.items.length === 0 && !mensajeExito" class="empty-cart">
+        <div class="empty-cart-icon" aria-hidden="true">🛒</div>
+        <h2>Tu carrito está vacío</h2>
+        <p>Cuando agregues productos, los vas a encontrar acá.</p>
+        <a routerLink="/productos" class="btn btn-primary px-4">Ver productos</a>
+      </section>
+
+      <div class="row g-4 align-items-start" *ngIf="c.items.length > 0 && !mensajeExito">
+        <section class="col-lg-7 col-xl-8" aria-labelledby="productos-carrito">
+          <div class="checkout-section-title">
+            <h2 id="productos-carrito">Productos</h2>
+            <span>{{ c.items.length }} {{ c.items.length === 1 ? 'artículo' : 'artículos' }}</span>
+          </div>
+
+          <article *ngFor="let item of c.items" class="cart-item-card">
+            <div class="cart-item-avatar" aria-hidden="true">
+              {{ item.producto_nombre.charAt(0) }}
+            </div>
+
+            <div class="cart-item-content">
+              <h3>{{ item.producto_nombre }}</h3>
+              <p>{{ item.cantidad }} × ${{ item.precio_unitario | number: '1.0-2' }}</p>
+              <span class="stock-label" *ngIf="item.stock > 0">Disponible</span>
+            </div>
+
+            <div class="cart-item-actions">
+              <strong>${{ (item.cantidad * item.precio_unitario) | number: '1.0-2' }}</strong>
+              <button
+                type="button"
+                class="btn btn-link text-danger"
+                (click)="eliminar(item.id)"
+                [disabled]="procesando">
+                Eliminar
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <aside class="col-lg-5 col-xl-4" aria-labelledby="resumen-compra">
+          <div class="payment-summary">
+            <h2 id="resumen-compra">Resumen de compra</h2>
+
+            <div class="summary-row">
+              <span>Artículos</span>
+              <span>{{ c.items.length }} {{ c.items.length === 1 ? 'producto' : 'productos' }}</span>
+            </div>
+            <div class="summary-total">
+              <span>Total</span>
+              <strong>${{ total | number: '1.0-2' }}</strong>
+            </div>
+
+            <div class="payment-field">
+              <label for="montoPagado" class="form-label">Monto a pagar</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input
+                  id="montoPagado"
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="montoPagado"
+                  min="0"
+                  [disabled]="procesando"
+                  placeholder="Ingresá el monto" />
+              </div>
+              <small>El monto debe ser igual o mayor al total.</small>
+            </div>
+
+            <div *ngIf="error" class="alert alert-danger py-2 mb-3" role="alert">
+              {{ error }}
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-primary w-100 checkout-confirm-button"
+              (click)="confirmar()"
+              [disabled]="procesando">
+              {{ procesando ? 'Procesando pago...' : 'Confirmar y pagar' }}
+            </button>
+
+            <button
+              type="button"
+              class="btn btn-link text-danger w-100 mt-2"
+              (click)="vaciar()"
+              [disabled]="procesando">
+              Vaciar carrito
+            </button>
+
+            <p class="secure-payment-note">🔒 Tus datos están protegidos durante el proceso de pago.</p>
+          </div>
+        </aside>
+      </div>
+    </ng-container>
+  </div>
+</main>
+
+<div *ngIf="loading" class="checkout-loading">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando carrito...</span>
+  </div>
+</div>

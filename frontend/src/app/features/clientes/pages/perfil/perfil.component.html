@@ -1,0 +1,180 @@
+<div class="container mt-4" *ngIf="perfil">
+
+  <div class="card">
+
+    <div class="card-header">
+      <h3>Mi Perfil</h3>
+    </div>
+
+    <div class="card-body">
+
+      <form>
+
+        <!-- USERNAME -->
+
+        <div class="mb-3">
+          <label class="form-label">Usuario</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.username" name="username" [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.username">
+            {{ errors.username[0] }}
+          </div>
+
+        </div>
+
+        <!-- EMAIL -->
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+
+          <input type="email" class="form-control" [(ngModel)]="perfil.email" name="email" [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.email">
+            {{ errors.email[0] }}
+          </div>
+
+        </div>
+
+        <!-- NOMBRE -->
+
+        <div class="mb-3">
+          <label class="form-label">Nombre</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.first_name" name="first_name"
+            [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.first_name">
+            {{ errors.first_name[0] }}
+          </div>
+        </div>
+
+        <!-- APELLIDO -->
+
+        <div class="mb-3">
+          <label class="form-label">Apellido</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.last_name" name="last_name"
+            [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.last_name">
+            {{ errors.last_name[0] }}
+          </div>
+        </div>
+
+        <!-- TELEFONO -->
+
+        <div class="mb-3">
+          <label class="form-label">Teléfono</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.telefono" name="telefono" [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.telefono">
+            {{ errors.telefono[0] }}
+          </div>
+
+        </div>
+
+        <!-- DIRECCION -->
+
+        <div class="mb-3">
+          <label class="form-label">Dirección</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.direccion" name="direccion"
+            [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.direccion">
+            {{ errors.direccion[0] }}
+          </div>
+
+        </div>
+
+        <!-- CIUDAD -->
+
+        <div class="mb-3">
+          <label class="form-label">Ciudad</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.ciudad" name="ciudad" [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.ciudad">
+            {{ errors.ciudad[0] }}
+          </div>
+
+        </div>
+
+        <!-- PROVINCIA -->
+
+        <div class="mb-3">
+          <label class="form-label">Provincia</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.provincia" name="provincia"
+            [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.provincia">
+            {{ errors.provincia[0] }}
+          </div>
+
+        </div>
+
+        <!-- CODIGO POSTAL -->
+
+        <div class="mb-3">
+          <label class="form-label">Código Postal</label>
+
+          <input type="text" class="form-control" [(ngModel)]="perfil.codigo_postal" name="codigo_postal"
+            [readonly]="!editMode">
+
+          <div class="text-danger mt-1" *ngIf="errors?.codigo_postal">
+            {{ errors.codigo_postal[0] }}
+          </div>
+
+        </div>
+
+        <!-- CONTRASEÑA -->
+
+        <div class="mb-3" *ngIf="editMode">
+          <label class="form-label">Nueva contraseña</label>
+
+          <input type="password" class="form-control" [(ngModel)]="password" name="password">
+
+          <div class="text-danger mt-1" *ngIf="errors?.password">
+            {{ errors.password[0] }}
+          </div>
+
+        </div>
+
+        <div class="mb-3" *ngIf="editMode">
+          <label class="form-label">Confirmar contraseña</label>
+
+          <input type="password" class="form-control" [(ngModel)]="confirmPassword" name="confirmPassword">
+        </div>
+
+      </form>
+
+      <div *ngIf="!editMode">
+        <button class="btn btn-primary" (click)="toggleEdit()">
+          Editar
+        </button>
+
+        <button class="btn btn-secondary ms-2" (click)="volver()">
+          Volver
+        </button>
+      </div>
+
+      <div *ngIf="editMode" class="d-flex gap-2">
+
+        <button class="btn btn-success" (click)="save()">
+          Guardar
+        </button>
+
+        <button class="btn btn-secondary" (click)="toggleEdit()">
+          Cancelar
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

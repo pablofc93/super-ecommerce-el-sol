@@ -1,0 +1,161 @@
+<div class="container mt-4">
+
+  <h2 class="mb-3">Administrar Productos</h2>
+
+  <button class="btn btn-primary mb-3" (click)="crearProducto()">
+    Crear producto
+  </button>
+
+  <!-- FORMULARIO -->
+  <div *ngIf="mostrarFormulario" class="card mb-4">
+    <div class="card-body">
+
+      <h5>{{ modoEdicion ? 'Editar producto' : 'Nuevo producto' }}</h5>
+
+      <div class="mb-3">
+        <label>Nombre</label>
+        <input class="form-control" [(ngModel)]="productoActual.nombre">
+      </div>
+
+      <div class="mb-3">
+        <label>Descripción</label>
+        <textarea class="form-control" [(ngModel)]="productoActual.descripcion">
+        </textarea>
+      </div>
+
+      <div class="mb-3">
+        <label>Precio</label>
+        <input type="number" class="form-control" [(ngModel)]="productoActual.precio">
+      </div>
+
+      <div class="mb-3">
+        <label>Stock</label>
+        <input type="number" class="form-control" [(ngModel)]="productoActual.stock">
+      </div>
+
+      <!-- CATEGORIA -->
+      <div class="mb-3">
+        <label>Categoría</label>
+
+        <select class="form-control" [(ngModel)]="productoActual.categoria_id">
+
+          <option [ngValue]="undefined">
+            Seleccione una categoría
+          </option>
+
+          <option *ngFor="let cat of categorias" [ngValue]="cat.id">
+
+            {{ cat.nombre }}
+
+          </option>
+
+        </select>
+
+      </div>
+
+      <!-- 🆕 IMAGEN -->
+      <div class="mb-3">
+
+        <label>Imagen del producto</label>
+
+        <input type="file" class="form-control" accept="image/*" (change)="onFileSelected($event)">
+
+      </div>
+
+      <!-- imagen actual -->
+      <div class="mb-3" *ngIf="modoEdicion && productoActual.imagen_url">
+
+        <label>Imagen actual</label>
+
+        <div>
+          <img [src]="productoActual.imagen_url" width="120" class="img-thumbnail">
+        </div>
+
+      </div>
+
+      <button class="btn btn-success me-2" (click)="guardarProducto()">
+        Guardar
+      </button>
+
+      <button class="btn btn-secondary" (click)="cancelar()">
+        Cancelar
+      </button>
+
+    </div>
+  </div>
+
+  <!--BUSCADOR-->
+  <div class="mb-3">
+    <input class="form-control" placeholder="Buscar productos..." [(ngModel)]="searchTerm" (ngModelChange)="buscar()">
+  </div>
+
+  <!-- TABLA -->
+
+  <table class="table table-striped">
+
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Categoría</th>
+        <th>Imagen</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+
+    <tbody>
+
+      <tr *ngFor="let producto of productos">
+
+        <td>{{ producto.id }}</td>
+
+        <td>{{ producto.nombre }}</td>
+
+        <td>${{ producto.precio | number: '1.0-2' }}</td>
+
+        <td>{{ producto.stock }}</td>
+
+        <td>
+          {{ producto.categoria?.nombre }}
+        </td>
+
+        <td>
+
+          <img *ngIf="producto.imagen_url" [src]="producto.imagen_url" width="50">
+
+        </td>
+
+        <td>
+
+          <button class="btn btn-warning btn-sm me-2" (click)="editarProducto(producto)">
+            Editar
+          </button>
+
+          <button class="btn btn-danger btn-sm" (click)="confirmarEliminar(producto.id!)">
+            Eliminar
+          </button>
+
+        </td>
+
+      </tr>
+
+    </tbody>
+    
+    </table>
+    
+    <!-- PAGINACIÓN -->
+    <app-pagination
+      *ngIf="!loading"
+      [paginaActual]="paginaActual"
+      [totalPaginas]="totalPaginas"
+      (paginaChange)="cambiarPagina($event)">
+    </app-pagination>
+
+</div>
+
+<app-modal-confirmacion *ngIf="productoAEliminar" titulo="Eliminar producto"
+  mensaje="¿Seguro que desea eliminar este producto?" (confirmar)="eliminarProducto()"
+  (cancelar)="productoAEliminar = null">
+</app-modal-confirmacion>

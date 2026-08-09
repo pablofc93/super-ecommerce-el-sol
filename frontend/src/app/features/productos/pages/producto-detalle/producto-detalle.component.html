@@ -1,0 +1,84 @@
+<div *ngIf="loading" class="detail-loading">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Cargando producto...</span>
+  </div>
+</div>
+
+<div *ngIf="error" class="container py-5">
+  <div class="alert alert-danger mb-0" role="alert">{{ error }}</div>
+</div>
+
+<main *ngIf="!loading && !error && producto" class="product-detail-page">
+  <div class="container py-4 py-lg-5">
+    <a routerLink="/productos" class="back-link">← Volver al catálogo</a>
+
+    <div class="row g-4 g-lg-5 align-items-start">
+      <section class="col-lg-6" aria-label="Imagen del producto">
+        <div class="product-image-panel">
+          <img
+            [src]="producto.imagen_url || 'assets/no-image.png'"
+            [alt]="producto.nombre"
+            class="product-image" />
+        </div>
+      </section>
+
+      <section class="col-lg-6">
+        <p class="product-category" *ngIf="producto.categoria">
+          {{ producto.categoria.nombre }}
+        </p>
+        <h1 class="product-title">{{ producto.nombre }}</h1>
+        <p class="product-description">{{ producto.descripcion }}</p>
+
+        <div class="product-price">${{ producto.precio | number: '1.0-2' }}</div>
+
+        <div class="product-meta">
+          <span *ngIf="producto.stock > 0" class="badge text-bg-success">
+            Disponible: {{ producto.stock }} unidades
+          </span>
+          <span *ngIf="producto.stock === 0" class="badge text-bg-danger">
+            Sin stock
+          </span>
+          <span *ngIf="producto.categoria" class="badge text-bg-light border text-dark">
+            {{ producto.categoria.nombre }}
+          </span>
+        </div>
+
+        <section *ngIf="producto.stock > 0 && !esAdmin" class="purchase-card" aria-labelledby="purchase-title">
+          <h2 id="purchase-title">Elegí la cantidad</h2>
+          <p>Stock disponible: {{ producto.stock }} unidades.</p>
+
+          <div class="row g-3 align-items-end">
+            <div class="col-sm-4">
+              <label for="cantidad" class="form-label">Cantidad</label>
+              <input
+                id="cantidad"
+                type="number"
+                class="form-control"
+                [(ngModel)]="cantidad"
+                min="1"
+                [max]="producto.stock"
+                [disabled]="agregando" />
+            </div>
+            <div class="col-sm-8 d-grid">
+              <button
+                type="button"
+                class="btn btn-primary add-to-cart-button"
+                (click)="agregarAlCarrito()"
+                [disabled]="agregando">
+                {{ agregando ? 'Agregando al carrito...' : 'Agregar al carrito' }}
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="mensaje" class="alert mt-3 mb-0" [class.alert-danger]="mensajeEsError" [class.alert-success]="!mensajeEsError" role="alert">
+            {{ mensaje }}
+          </div>
+        </section>
+
+        <div *ngIf="producto.stock === 0" class="alert alert-warning mt-4 mb-0" role="alert">
+          Este producto no tiene unidades disponibles por el momento.
+        </div>
+      </section>
+    </div>
+  </div>
+</main>

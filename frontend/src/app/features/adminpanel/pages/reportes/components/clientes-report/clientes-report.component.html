@@ -1,0 +1,54 @@
+<h4>👥 Ingresos por cliente</h4>
+
+<div *ngIf="loading">Cargando...</div>
+
+<div *ngIf="error" class="alert alert-danger">
+  {{ error }}
+</div>
+
+<table class="table table-striped" *ngIf="!loading && clientes.length > 0">
+
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Email</th>
+      <th>Ingresos</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let c of clientes">
+
+      <td>{{ c.cliente_nombre }}</td>
+
+      <td>{{ c.cliente_email }}</td>
+
+      <td>${{ c.total_ingresos | number: '1.0-2' }}</td>
+
+    </tr>
+  </tbody>
+
+</table>
+
+<!-- INFO PAGINACIÓN -->
+<p class="text-muted" *ngIf="!loading && clientes.length > 0">
+
+  Mostrando página {{ paginaActual }}
+
+  — Total: {{ totalRegistros }} registros
+
+</p>
+
+<!-- PAGINACIÓN -->
+<app-pagination
+  *ngIf="!loading && totalPaginas > 1"
+  class="mt-3"
+  [paginaActual]="paginaActual"
+  [totalPaginas]="totalPaginas"
+  (paginaChange)="cambiarPagina($event)">
+</app-pagination>
+
+<!-- SIN DATOS -->
+<div *ngIf="!loading && clientes.length === 0" class="alert alert-info">
+  No hay datos
+</div>

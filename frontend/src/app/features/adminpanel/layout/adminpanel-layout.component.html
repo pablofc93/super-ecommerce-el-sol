@@ -1,0 +1,165 @@
+<!-- ========================= -->
+<!-- HEADER ADMIN -->
+<!-- ========================= -->
+<header class="admin-header bg-primary text-white py-3">
+  <div class="container-fluid d-flex justify-content-between align-items-center">
+
+    <h1 class="h5 m-0">
+      <a
+        routerLink="/admin/dashboard"
+        class="text-white text-decoration-none">
+        Panel Administrador
+      </a>
+    </h1>
+
+    <div class="d-flex align-items-center gap-3">
+
+      <a
+        routerLink="/"
+        class="btn btn-outline-light btn-sm">
+        Ver tienda
+      </a>
+
+      <button
+        (click)="logout()"
+        class="btn btn-danger btn-sm">
+        Logout
+      </button>
+
+    </div>
+
+  </div>
+</header>
+
+
+<!-- ========================= -->
+<!-- BODY ADMIN -->
+<!-- ========================= -->
+<div class="admin-wrapper">
+
+
+  <!-- SIDEBAR -->
+  <nav
+    class="sidebar bg-dark pt-3"
+    [class.sidebar-open]="sidebarVisible"
+    (mouseenter)="sidebarVisible = true"
+    (mouseleave)="sidebarVisible = false">
+
+    <ul class="nav flex-column">
+
+      <li class="nav-item">
+        <a
+          class="nav-link text-white"
+          routerLink="dashboard"
+          routerLinkActive="active">
+
+          <i class="bi bi-speedometer2 menu-icon"></i>
+          <span class="menu-text">Dashboard</span>
+
+        </a>
+      </li>
+
+
+      <li class="nav-item">
+        <a
+          class="nav-link text-white"
+          routerLink="usuarios"
+          routerLinkActive="active">
+
+          <i class="bi bi-people menu-icon"></i>
+          <span class="menu-text">Usuarios</span>
+
+        </a>
+      </li>
+
+
+      <li class="nav-item">
+        <a
+          class="nav-link text-white"
+          routerLink="productos"
+          routerLinkActive="active">
+
+          <i class="bi bi-box-seam menu-icon"></i>
+          <span class="menu-text">Productos</span>
+
+        </a>
+      </li>
+
+
+      <li class="nav-item">
+        <a
+            class="nav-link text-white"
+            routerLink="categorias"
+            routerLinkActive="active">
+
+            <i class="bi bi-tags menu-icon"></i>
+            <span class="menu-text">Categorías</span>
+
+        </a>
+    </li>
+
+
+      <li class="nav-item">
+        <a
+          class="nav-link text-white"
+          routerLink="pedidos"
+          routerLinkActive="active">
+
+          <i class="bi bi-receipt menu-icon"></i>
+          <span class="menu-text">Pedidos</span>
+
+        </a>
+      </li>
+
+
+      <li class="nav-item">
+        <a
+          class="nav-link text-white"
+          routerLink="reportes"
+          routerLinkActive="active">
+
+          <i class="bi bi-file-earmark-bar-graph menu-icon"></i>
+          <span class="menu-text">Reportes</span>
+
+        </a>
+      </li>
+
+
+      <li class="nav-item mt-4">
+        <a
+          class="nav-link text-warning"
+          routerLink="perfil"
+          routerLinkActive="active">
+
+          <i class="bi bi-gear menu-icon"></i>
+          <span class="menu-text">Mi Perfil</span>
+
+        </a>
+      </li>
+
+    </ul>
+
+  </nav>
+
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <div class="content-container">
+      <router-outlet></router-outlet>
+    </div>
+
+  </main>
+
+
+</div>
+
+
+<!-- ========================= -->
+<!-- FOOTER ADMIN -->
+<!-- ========================= -->
+<footer class="admin-footer bg-primary text-white text-center">
+  <small>
+    © 2026 Super El Sol - Panel Administrativo
+  </small>
+</footer>

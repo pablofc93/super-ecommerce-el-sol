@@ -1,0 +1,31 @@
+<div class="container mt-4">
+
+  <h2 class="mb-4">📊 Reportes</h2>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item" *ngFor="let tab of tabs">
+      <button
+        class="nav-link"
+        [class.active]="tabActivo === tab.key"
+        (click)="cambiarTab(tab.key)"
+      >
+        {{ tab.icon }} {{ tab.label }}
+      </button>
+    </li>
+  </ul>
+
+  <!-- Contenido -->
+  <div [ngSwitch]="tabActivo">
+
+    <app-productos-report *ngSwitchCase="'productos'"></app-productos-report>
+
+    <app-clientes-report *ngSwitchCase="'clientes'"></app-clientes-report>
+
+    <app-recomendaciones-report *ngSwitchCase="'recomendaciones'"></app-recomendaciones-report>
+
+    <app-historicos-report *ngSwitchCase="'historicos'"></app-historicos-report>
+
+  </div>
+
+</div>

@@ -129,7 +129,7 @@ Para ejecutar el proyecto localmente se necesita:
 Desde una terminal, ubicarse en la carpeta donde se desea instalar el proyecto y ejecutar:
 
 ```bash
-git clone [URL_DEL_REPOSITORIO]
+git clone https://github.com/pablofc93/super-ecommerce-el-sol.git
 cd super-ecommerce-el-sol
 ```
 
@@ -413,9 +413,15 @@ También es posible utilizar una copia de la base de datos SQLite ya preparada.
 
 Descargar `db.sqlite3` desde:
 
-**[PENDIENTE: URL DE DESCARGA]**
+https://mega.nz/file/q1xwADgT#ocwb_qbO_YtbXu0dn8gVG11VqezgCQVI2uhi8HJDrn0
 
-Luego colocar el archivo en:
+En este enlace se proporciona tanto la base de datos como la carpeta de imágenes de los productos
+
+1-Descargar el archivo
+
+2-Descomprimir
+
+3-Luego colocar el archivo db.sqlite3 en:
 
 ```text
 backend/db.sqlite3
@@ -532,11 +538,11 @@ La base de datos puede inicializarse mediante las migraciones y los comandos de 
 
 Las imágenes utilizadas por los productos se almacenan externamente y no se incluyen directamente en el repositorio debido a su cantidad y tamaño.
 
-**Repositorio externo de imágenes:**
 
-[PENDIENTE: URL DEL REPOSITORIO DE IMÁGENES]
+Descarga carpeta de imágenes:
+https://mega.nz/folder/rphGVKwD#uqppgeecaqomuvZLZYaodw
 
-Las instrucciones para descargar y ubicar las imágenes se incorporarán aquí.
+Copiar la carpeta productos dentro de: ```text /backend/media/ ```
 
 ## Documentación
 

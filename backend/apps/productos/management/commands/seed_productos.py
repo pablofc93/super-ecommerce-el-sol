@@ -5,43 +5,38 @@ Uso:
     python manage.py seed_productos
 
 Características:
-- Lee todos los productos desde utils/seed/productos.txt.
-- Cada fila del TXT representa un producto independiente.
-- NO utiliza el ID original del TXT como ID de la base de datos.
-- Los IDs de Django son generados automáticamente.
-- Permite productos repetidos o con datos idénticos.
+- Lee todos los registros de productos.txt.
+- Cada fila de producto representa un registro independiente.
+- NO utiliza el ID original del TXT como ID de Django.
 - NO elimina duplicados.
-- NO compara productos por sus datos.
-- Inserta todos los registros encontrados en productos.txt.
-- Solamente permite realizar la carga UNA VEZ.
-- Si productos_producto ya contiene registros, el seed se detiene.
-- Convierte correctamente precios con formato argentino.
-- Convierte correctamente stocks con separador de miles.
-- Verifica que todas las categorías utilizadas existan.
-- Utiliza bulk_create() para realizar la carga rápidamente.
-- Actualiza sqlite_sequence cuando corresponde.
+- NO compara productos por nombre, precio, stock, imagen, etc.
+- Permite que existan productos idénticos.
+- Solamente permite ejecutar el seed UNA VEZ.
+- Si productos_producto ya contiene registros, no inserta nada.
+- Detecta filas de productos de 7 o 9 columnas.
+- Ignora únicamente encabezados y separadores Markdown.
+- Informa exactamente las líneas problemáticas.
+- Verifica las categorías antes de insertar.
+- Utiliza bulk_create().
+- Actualiza sqlite_sequence.
+- Verifica al finalizar que la cantidad de registros de la BD
+  coincida exactamente con la cantidad de registros del TXT.
 
 IMPORTANTE:
-Este seed es de ejecución única.
+Cada fila del TXT es considerada un producto independiente.
 
-Primera ejecución:
-    productos_producto = 0 registros
-    productos.txt = 1016 registros
+Por ejemplo:
+    TXT:
+        producto A
+        producto A
+        producto A
 
-Resultado:
-    productos_producto = 1016 registros
+    Resultado:
+        3 registros en productos_producto.
 
-Segunda ejecución:
-    productos_producto = 1016 registros
-
-Resultado:
-    No se realiza ninguna inserción.
-
-El contenido de productos.txt puede contener productos repetidos.
-Cada fila se considera un producto independiente.
+Los productos pueden tener exactamente los mismos datos.
 """
 
-import re
 import time
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -72,11 +67,11 @@ class Command(BaseCommand):
         Convierte precios escritos con formato argentino.
 
         Ejemplos:
-        4.143,39 -> 4143.39
-        359,99   -> 359.99
-        1.060    -> 1060.00
-        7.900    -> 7900.00
-        999      -> 999.00
+            4.143,39 -> 4143.39
+            359,99   -> 359.99
+            1.060    -> 1060.00
+            7.900    -> 7900.00
+            999      -> 999.00
         """
         valor = str(valor).strip()
 
@@ -85,19 +80,22 @@ class Command(BaseCommand):
 
         valor = valor.replace("$", "").replace(" ", "")
 
+        # Formato argentino con coma decimal
         if "," in valor:
-            # Ejemplo: 4.143,39 -> 4143.39
+            # 4.143,39 -> 4143,39 -> 4143.39
             valor = valor.replace(".", "").replace(",", ".")
+
+        # Formato sin coma
         else:
             partes = valor.split(".")
-            # Ejemplos: 4.143 -> 4143 | 7.900 -> 7900
+            # 4.143 -> 4143 | 7.900 -> 7900
             if len(partes) == 2 and len(partes[1]) == 3:
                 valor = "".join(partes)
 
         try:
             return Decimal(valor).quantize(Decimal("0.01"))
         except InvalidOperation as error:
-            raise ValueError(f"Precio inválido: {valor}") from error
+            raise ValueError(f"Precio inválido: '{valor}'") from error
 
     # =====================================================
     # CONVERTIR STOCK
@@ -107,19 +105,22 @@ class Command(BaseCommand):
         Convierte stocks escritos con formato argentino.
 
         Ejemplos:
-        43.432 -> 43432
-        1.546  -> 1546
-        200    -> 200
+            43.432 -> 43432
+            1.546  -> 1546
+            200    -> 200
         """
-        valor = str(valor).strip().replace(".", "")
+        valor = str(valor).strip()
 
         if not valor:
             raise ValueError("El stock está vacío.")
 
+        # Elimina separadores de miles.
+        valor = valor.replace(".", "")
+
         try:
             stock = int(valor)
         except ValueError as error:
-            raise ValueError(f"Stock inválido: {valor}") from error
+            raise ValueError(f"Stock inválido: '{valor}'") from error
 
         if stock < 0:
             raise ValueError(f"El stock no puede ser negativo: {stock}")
@@ -127,55 +128,130 @@ class Command(BaseCommand):
         return stock
 
     # =====================================================
+    # DETERMINAR SI ES SEPARADOR MARKDOWN
+    # =====================================================
+    def es_separador_markdown(self, linea):
+        """
+        Determina si una línea corresponde al separador de una tabla
+        Markdown. Ejemplo: |---|---|---|---|
+        """
+        contenido = linea.strip()
+
+        if not contenido.startswith("|"):
+            return False
+
+        partes = [parte.strip() for parte in contenido.split("|")]
+
+        for parte in partes:
+            if parte == "":
+                continue
+            if set(parte) <= {"-", ":"}:
+                continue
+            return False
+
+        return True
+
+    # =====================================================
+    # ES FILA DE PRODUCTO
+    # =====================================================
+    def es_fila_producto(self, linea):
+        """
+        Determina si una línea puede representar un producto.
+
+        NO se exige que el ID original sea numérico, porque el ID
+        original del TXT NO determina el ID de Django.
+
+        Se consideran posibles productos las filas con 7 o 9 columnas.
+        """
+        linea = linea.strip()
+
+        if not linea:
+            return False
+
+        if not linea.startswith("|"):
+            return False
+
+        if self.es_separador_markdown(linea):
+            return False
+
+        partes = [parte.strip() for parte in linea.split("|")]
+
+        if partes and partes[0] == "":
+            partes.pop(0)
+
+        if partes and partes[-1] == "":
+            partes.pop()
+
+        return len(partes) in (7, 9)
+
+    # =====================================================
     # OBTENER FILAS
     # =====================================================
     def obtener_filas(self, ruta):
         """
-        Lee productos.txt. Cada fila cuyo primer campo sea numérico
-        representa un producto independiente. NO se eliminan duplicados.
+        Lee productos.txt.
 
-        Se aceptan dos formatos:
+        Cada fila válida de 7 o 9 columnas se considera un producto
+        independiente. NO se eliminan duplicados, NO se compara el
+        producto con otros productos, NO se utiliza el ID original
+        para determinar si una fila debe insertarse.
 
-        FORMATO 1:
-        |id|nombre|descripcion|precio|stock|imagen|categoria_id|
-
-        FORMATO 2:
-        |id|nombre|descripcion|precio|creado_en|actualizado_en|categoria_id|imagen|stock|
-
-        En el formato 2 se ignoran creado_en y actualizado_en.
+        Devuelve una tupla:
+            (productos, lineas_ignoradas, lineas_problematicas)
         """
         productos = []
+        lineas_ignoradas = []
+        lineas_problematicas = []
 
         with ruta.open("r", encoding="utf-8-sig") as archivo:
-            for numero_linea, linea in enumerate(archivo, start=1):
-                linea = linea.strip()
+            for numero_linea, linea_original in enumerate(archivo, start=1):
+                linea = linea_original.strip()
 
-                # Ignorar líneas vacías
+                # Línea vacía
                 if not linea:
+                    lineas_ignoradas.append((numero_linea, "Línea vacía"))
                     continue
 
-                # Ignorar líneas que no comienzan con "|"
+                # Línea que no comienza con "|"
                 if not linea.startswith("|"):
+                    lineas_ignoradas.append((numero_linea, "No comienza con '|'"))
                     continue
 
-                # Ignorar encabezados y separadores Markdown.
-                # Solamente se procesan líneas cuyo primer campo sea un número.
-                if not re.match(r"^\|\s*\d+\s*\|", linea):
+                # Separador Markdown
+                if self.es_separador_markdown(linea):
+                    lineas_ignoradas.append((numero_linea, "Separador Markdown"))
                     continue
 
                 # Separar columnas
                 partes = [parte.strip() for parte in linea.split("|")]
 
-                # Eliminar columna vacía inicial
                 if partes and partes[0] == "":
                     partes.pop(0)
 
-                # Eliminar columna vacía final
                 if partes and partes[-1] == "":
                     partes.pop()
 
-                # FORMATO DE 7 COLUMNAS
-                if len(partes) == 7:
+                cantidad_columnas = len(partes)
+
+                # Encabezado
+                if cantidad_columnas in (7, 9) and partes[0].lower() == "id":
+                    lineas_ignoradas.append((numero_linea, "Encabezado de tabla"))
+                    continue
+
+                # Cualquier otra cantidad de columnas
+                if cantidad_columnas not in (7, 9):
+                    lineas_problematicas.append({
+                        "linea": numero_linea,
+                        "contenido": linea_original.rstrip("\n"),
+                        "motivo": (
+                            f"Cantidad de columnas inválida: {cantidad_columnas}. "
+                            f"Se esperaban 7 o 9."
+                        ),
+                    })
+                    continue
+
+                # FORMATO 1 (7 columnas)
+                if cantidad_columnas == 7:
                     (
                         id_original,
                         nombre,
@@ -186,8 +262,8 @@ class Command(BaseCommand):
                         categoria_id,
                     ) = partes
 
-                # FORMATO DE 9 COLUMNAS
-                elif len(partes) == 9:
+                # FORMATO 2 (9 columnas)
+                else:
                     (
                         id_original,
                         nombre,
@@ -200,51 +276,113 @@ class Command(BaseCommand):
                         stock,
                     ) = partes
 
-                else:
-                    raise CommandError(
-                        f"Línea {numero_linea}: formato inválido. "
-                        f"Se encontraron {len(partes)} columnas. Se esperaban 7 o 9."
-                    )
+                # ID ORIGINAL: no se utiliza como ID de Django, por lo
+                # tanto no es necesario que sea numérico. Se conserva
+                # solo como información del TXT.
+                id_original = id_original.strip()
 
-                # Convertir datos. Se valida que exista un ID numérico
-                # pero NO se utiliza para el ID de Django.
-                try:
-                    id_original = int(id_original)
-                    precio_convertido = self.convertir_precio(precio)
-                    stock_convertido = self.convertir_stock(stock)
-                    categoria_id = int(categoria_id)
-                except (ValueError, TypeError) as error:
-                    raise CommandError(f"Error en línea {numero_linea}: {error}") from error
+                # NOMBRE: si está vacío, se informa el problema (no se
+                # descarta silenciosamente).
+                nombre = nombre.strip()
 
-                # Validar nombre
                 if not nombre:
-                    raise CommandError(
-                        f"Línea {numero_linea}: el nombre del producto está vacío."
-                    )
+                    lineas_problematicas.append({
+                        "linea": numero_linea,
+                        "contenido": linea_original.rstrip("\n"),
+                        "motivo": "El nombre está vacío.",
+                    })
+                    continue
 
-                # Agregar producto. No se utiliza ningún conjunto (set)
-                # para detectar duplicados; cada fila genera un producto.
+                # DESCRIPCIÓN
+                descripcion = descripcion if descripcion else None
+
+                # PRECIO
+                try:
+                    precio_convertido = self.convertir_precio(precio)
+                except ValueError as error:
+                    lineas_problematicas.append({
+                        "linea": numero_linea,
+                        "contenido": linea_original.rstrip("\n"),
+                        "motivo": str(error),
+                    })
+                    continue
+
+                # STOCK
+                try:
+                    stock_convertido = self.convertir_stock(stock)
+                except ValueError as error:
+                    lineas_problematicas.append({
+                        "linea": numero_linea,
+                        "contenido": linea_original.rstrip("\n"),
+                        "motivo": str(error),
+                    })
+                    continue
+
+                # CATEGORÍA
+                try:
+                    categoria_id = int(str(categoria_id).strip())
+                except ValueError:
+                    lineas_problematicas.append({
+                        "linea": numero_linea,
+                        "contenido": linea_original.rstrip("\n"),
+                        "motivo": f"categoria_id inválido: '{categoria_id}'.",
+                    })
+                    continue
+
+                # IMAGEN
+                imagen = imagen if imagen else None
+
+                # AGREGAR PRODUCTO
                 productos.append({
                     "numero_linea": numero_linea,
                     "id_original": id_original,
                     "nombre": nombre,
-                    "descripcion": descripcion if descripcion else None,
+                    "descripcion": descripcion,
                     "precio": precio_convertido,
                     "stock": stock_convertido,
-                    "imagen": imagen if imagen else None,
+                    "imagen": imagen,
                     "categoria_id": categoria_id,
                 })
 
-        return productos
+        return productos, lineas_ignoradas, lineas_problematicas
+
+    # =====================================================
+    # MOSTRAR DIAGNÓSTICO
+    # =====================================================
+    def mostrar_diagnostico(self, lineas_ignoradas, lineas_problematicas):
+        """
+        Muestra información de diagnóstico para saber exactamente qué
+        ocurrió durante la lectura del TXT.
+        """
+        self.stdout.write("")
+        self.stdout.write("=" * 60)
+        self.stdout.write("DIAGNÓSTICO DE LECTURA")
+        self.stdout.write("=" * 60)
+        self.stdout.write(f"Líneas ignoradas     : {len(lineas_ignoradas)}")
+        self.stdout.write(f"Líneas problemáticas  : {len(lineas_problematicas)}")
+
+        if lineas_ignoradas:
+            self.stdout.write("")
+            self.stdout.write("Líneas ignoradas:")
+            for numero_linea, motivo in lineas_ignoradas:
+                self.stdout.write(f"  Línea {numero_linea}: {motivo}")
+
+        if lineas_problematicas:
+            self.stdout.write("")
+            self.stdout.write(self.style.ERROR("LÍNEAS PROBLEMÁTICAS:"))
+            for problema in lineas_problematicas:
+                self.stdout.write(self.style.ERROR(f"\n  Línea {problema['linea']}"))
+                self.stdout.write(f"  Motivo: {problema['motivo']}")
+                self.stdout.write(f"  Contenido: {problema['contenido']}")
+
+        self.stdout.write("")
+        self.stdout.write("=" * 60)
 
     # =====================================================
     # VERIFICAR CATEGORÍAS
     # =====================================================
     def verificar_categorias(self, productos):
-        """
-        Verifica que todas las categorías utilizadas por productos.txt
-        existan. No crea ni modifica categorías.
-        """
+        """Verifica que todas las categorías utilizadas por los productos existan."""
         categoria_ids = {
             producto["categoria_id"]
             for producto in productos
@@ -267,7 +405,7 @@ class Command(BaseCommand):
 
         if categorias_faltantes:
             raise CommandError(
-                "No existen las siguientes categorías en productos_categoria: "
+                "No existen las siguientes categorías en productos_categoria:\n"
                 f"{sorted(categorias_faltantes)}"
             )
 
@@ -276,10 +414,9 @@ class Command(BaseCommand):
     # =====================================================
     def crear_objetos_productos(self, productos):
         """
-        Convierte todas las filas del TXT en objetos Producto.
-        Cada fila representa un producto independiente. NO se eliminan
-        duplicados, NO se compara con otros productos, NO se establece
-        el ID.
+        Convierte TODAS las filas del TXT en objetos Producto. No
+        elimina duplicados, no utiliza sets, no compara productos ni
+        establece el ID.
         """
         ahora = timezone.now()
 
@@ -301,7 +438,7 @@ class Command(BaseCommand):
     # ACTUALIZAR SECUENCIA SQLITE
     # =====================================================
     def actualizar_secuencia(self):
-        """Actualiza sqlite_sequence después de insertar todos los productos."""
+        """Actualiza sqlite_sequence para productos_producto."""
         if connection.vendor != "sqlite":
             return
 
@@ -323,23 +460,34 @@ class Command(BaseCommand):
                         "VALUES ('productos_producto', %s)",
                         [max_id],
                     )
+            else:
+                cursor.execute(
+                    "DELETE FROM sqlite_sequence WHERE name = 'productos_producto'"
+                )
 
     # =====================================================
     # VALIDAR CANTIDAD FINAL
     # =====================================================
-    def validar_cantidad_final(self, cantidad_txt):
+    def validar_cantidad_final(self, cantidad_esperada, cantidad_insertada):
         """
-        Comprueba que la cantidad de registros de la BD coincida
-        exactamente con la cantidad de registros encontrados en
-        productos.txt.
+        Verifica que:
+            cantidad TXT = cantidad insertada = cantidad BD
         """
         cantidad_bd = Producto.objects.count()
 
-        if cantidad_bd != cantidad_txt:
+        if cantidad_insertada != cantidad_esperada:
             raise CommandError(
                 "\nERROR DE VALIDACIÓN.\n\n"
-                f"Productos encontrados en TXT : {cantidad_txt}\n"
-                f"Productos encontrados en BD  : {cantidad_bd}\n\n"
+                f"Productos esperados : {cantidad_esperada}\n"
+                f"Productos preparados: {cantidad_insertada}\n\n"
+                "No se insertaron todos los productos."
+            )
+
+        if cantidad_bd != cantidad_esperada:
+            raise CommandError(
+                "\nERROR DE VALIDACIÓN.\n\n"
+                f"Productos esperados : {cantidad_esperada}\n"
+                f"Productos en BD     : {cantidad_bd}\n\n"
                 "La cantidad de registros no coincide."
             )
 
@@ -354,45 +502,67 @@ class Command(BaseCommand):
 
         # ENCABEZADO
         self.stdout.write("")
-        self.stdout.write("=" * 60)
+        self.stdout.write("=" * 70)
         self.stdout.write("CARGADOR DE PRODUCTOS")
-        self.stdout.write("=" * 60)
+        self.stdout.write("=" * 70)
         self.stdout.write(f"Archivo: {ruta}")
-        self.stdout.write("=" * 60)
+        self.stdout.write("=" * 70)
 
         # VERIFICAR ARCHIVO
         if not ruta.exists():
             raise CommandError(f"No se encontró el archivo:\n{ruta}")
 
         # VERIFICAR SI YA FUE EJECUTADO
-        cantidad_bd = Producto.objects.count()
+        cantidad_bd_actual = Producto.objects.count()
 
-        if cantidad_bd > 0:
+        if cantidad_bd_actual > 0:
             self.stdout.write("")
             self.stdout.write(
                 self.style.WARNING("EL SEED DE PRODUCTOS YA FUE EJECUTADO.")
             )
             self.stdout.write("")
-            self.stdout.write(f"Productos actualmente en BD: {cantidad_bd}")
+            self.stdout.write(f"Productos actualmente en BD: {cantidad_bd_actual}")
             self.stdout.write("")
             self.stdout.write(
                 self.style.WARNING("No se realizará ninguna inserción.")
             )
             self.stdout.write(
-                self.style.WARNING(
-                    "El seed de productos solamente puede ejecutarse una vez."
-                )
+                self.style.WARNING("Este seed solamente puede ejecutarse una vez.")
             )
             return
 
-        # LEER PRODUCTOS
+        # LEER TXT
         self.stdout.write("")
         self.stdout.write("Leyendo productos.txt...")
-        productos_archivo = self.obtener_filas(ruta)
-        cantidad_txt = len(productos_archivo)
-        self.stdout.write(f"Productos encontrados en archivo: {cantidad_txt}")
 
-        # VERIFICAR QUE HAYA PRODUCTOS
+        productos_archivo, lineas_ignoradas, lineas_problematicas = self.obtener_filas(ruta)
+        cantidad_productos = len(productos_archivo)
+
+        # DIAGNÓSTICO
+        self.mostrar_diagnostico(lineas_ignoradas, lineas_problematicas)
+
+        # RESUMEN DE LECTURA
+        self.stdout.write("")
+        self.stdout.write("=" * 70)
+        self.stdout.write("RESUMEN DE LECTURA")
+        self.stdout.write("=" * 70)
+        self.stdout.write(f"Productos detectados : {cantidad_productos}")
+        self.stdout.write(f"Líneas ignoradas     : {len(lineas_ignoradas)}")
+        self.stdout.write(f"Líneas problemáticas : {len(lineas_problematicas)}")
+        self.stdout.write("=" * 70)
+
+        # SI HAY PROBLEMAS
+        if lineas_problematicas:
+            raise CommandError(
+                "\nEl TXT contiene filas que parecen ser productos pero "
+                "tienen datos inválidos.\n\n"
+                f"Productos válidos detectados: {cantidad_productos}\n"
+                f"Filas problemáticas: {len(lineas_problematicas)}\n\n"
+                "Revisa las líneas indicadas en el diagnóstico anterior.\n"
+                "El seed NO realizará ninguna inserción parcial."
+            )
+
+        # VERIFICAR PRODUCTOS
         if not productos_archivo:
             raise CommandError("productos.txt no contiene ningún producto válido.")
 
@@ -406,7 +576,17 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.stdout.write("Preparando productos...")
         objetos_productos = self.crear_objetos_productos(productos_archivo)
-        self.stdout.write(f"Productos preparados: {len(objetos_productos)}")
+        cantidad_objetos = len(objetos_productos)
+        self.stdout.write(f"Productos preparados: {cantidad_objetos}")
+
+        # VERIFICACIÓN ANTES DE INSERTAR
+        if cantidad_objetos != cantidad_productos:
+            raise CommandError(
+                "\nERROR INTERNO DEL SEED.\n\n"
+                f"Productos detectados: {cantidad_productos}\n"
+                f"Objetos preparados: {cantidad_objetos}\n\n"
+                "La cantidad no coincide. No se realizará la inserción."
+            )
 
         # INSERTAR
         self.stdout.write("")
@@ -417,7 +597,7 @@ class Command(BaseCommand):
             self.actualizar_secuencia()
 
         # VALIDACIÓN FINAL
-        total_bd = self.validar_cantidad_final(cantidad_txt)
+        total_bd = self.validar_cantidad_final(cantidad_productos, cantidad_objetos)
 
         # OBTENER IDS
         primer_id = Producto.objects.order_by("id").values_list("id", flat=True).first()
@@ -426,21 +606,23 @@ class Command(BaseCommand):
         # TIEMPO
         fin = time.perf_counter()
 
-        # RESULTADO
+        # RESULTADO FINAL
         self.stdout.write("")
-        self.stdout.write("=" * 60)
+        self.stdout.write("=" * 70)
         self.stdout.write(self.style.SUCCESS("CARGA COMPLETADA CORRECTAMENTE"))
-        self.stdout.write("=" * 60)
-        self.stdout.write(f"Registros encontrados en TXT : {cantidad_txt}")
+        self.stdout.write("=" * 70)
+        self.stdout.write(f"Registros encontrados en TXT : {cantidad_productos}")
+        self.stdout.write(f"Registros preparados         : {cantidad_objetos}")
         self.stdout.write(f"Registros insertados en BD   : {total_bd}")
         self.stdout.write(f"Primer ID generado           : {primer_id}")
         self.stdout.write(f"Último ID generado           : {ultimo_id}")
 
         self.stdout.write("")
+        self.stdout.write(self.style.SUCCESS("VALIDACIÓN CORRECTA:"))
         self.stdout.write(
             self.style.SUCCESS(
-                "VALIDACIÓN CORRECTA: todos los registros de productos.txt "
-                "fueron insertados."
+                "La cantidad de registros del TXT coincide exactamente con "
+                "la cantidad de registros de productos_producto."
             )
         )
 

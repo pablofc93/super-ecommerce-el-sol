@@ -148,13 +148,23 @@ Desde la carpeta raíz:
 python -m venv venv
 ```
 
-### Windows
+### Windows - CMD o PowerShell
 
 Activar el entorno virtual:
 
 ```bash
 venv\Scripts\activate
 ```
+
+### Windows - Git Bash
+
+Si se está utilizando Git Bash, activar el entorno virtual mediante:
+
+```bash
+. venv/Scripts/activate
+```
+
+> Si el entorno virtual se activa correctamente, el nombre `venv` aparecerá al inicio de la línea de comandos.
 
 ### Linux / macOS
 
@@ -495,7 +505,23 @@ En una terminal:
 
 ```bash
 cd super-ecommerce-el-sol
+```
+
+Si se está utilizando Git Bash:
+
+```bash
+. venv/Scripts/activate
+```
+
+Si se está utilizando CMD o PowerShell:
+
+```bash
 venv\Scripts\activate
+```
+
+Luego:
+
+```bash
 cd backend
 python manage.py runserver
 ```
@@ -505,7 +531,7 @@ python manage.py runserver
 En otra terminal:
 
 ```bash
-cd super-ecommerce-el-sol\frontend
+cd super-ecommerce-el-sol/frontend
 npm install
 ng serve
 ```

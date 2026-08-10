@@ -1,39 +1,29 @@
-from django.core.management.base import BaseCommand
 import time
+
+from django.core.management.base import BaseCommand
 
 # ==========================================
 # Servicios
 # ==========================================
 from apps.analitica.services.demanda import (
-    actualizar_demanda_productos,
     actualizar_categorias_mas_movidas,
+    actualizar_demanda_productos,
 )
-
-from apps.analitica.services.apriori import (
-    calcular_reglas_asociacion,
-)
-
-from apps.analitica.services.kmeans import (
-    segmentar_clientes_kmeans,
-)
-
+from apps.analitica.services.apriori import calcular_reglas_asociacion
+from apps.analitica.services.kmeans import segmentar_clientes_kmeans
 from apps.analitica.tasks import limpiar_datos
 
 
 class Command(BaseCommand):
-    help = "Actualiza métricas de analítica y minería de datos"
+
+    help = "Actualiza metricas de analitica y mineria de datos"
 
     def handle(self, *args, **options):
-
         inicio_total = time.perf_counter()
 
         self.stdout.write("")
         self.stdout.write("=" * 65)
-        self.stdout.write(
-            self.style.SUCCESS(
-                " INICIANDO ACTUALIZACIÓN DE ANALÍTICA"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS("INICIANDO ACTUALIZACION DE ANALITICA"))
         self.stdout.write("=" * 65)
 
         tiempos = {}
@@ -48,14 +38,11 @@ class Command(BaseCommand):
         tiempos["Limpieza"] = time.perf_counter() - inicio
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"✔ Datos limpiados "
-                f"({tiempos['Limpieza']:.2f}s)"
-            )
+            self.style.SUCCESS(f"Datos limpiados ({tiempos['Limpieza']:.2f}s)")
         )
 
         # =====================================================
-        # 2. PRODUCTOS MÁS VENDIDOS
+        # 2. PRODUCTOS MAS VENDIDOS
         # =====================================================
         inicio = time.perf_counter()
 
@@ -65,24 +52,22 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"✔ Productos más vendidos actualizados "
-                f"({tiempos['Productos']:.2f}s)"
+                f"Productos mas vendidos actualizados ({tiempos['Productos']:.2f}s)"
             )
         )
 
         # =====================================================
-        # 3. CATEGORÍAS
+        # 3. CATEGORIAS
         # =====================================================
         inicio = time.perf_counter()
 
         actualizar_categorias_mas_movidas()
 
-        tiempos["Categorías"] = time.perf_counter() - inicio
+        tiempos["Categorias"] = time.perf_counter() - inicio
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"✔ Categorías más movidas actualizadas "
-                f"({tiempos['Categorías']:.2f}s)"
+                f"Categorias mas movidas actualizadas ({tiempos['Categorias']:.2f}s)"
             )
         )
 
@@ -103,15 +88,14 @@ class Command(BaseCommand):
         if reglas:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f" Reglas de asociación generadas: {len(reglas)} "
+                    f"Reglas de asociacion generadas: {len(reglas)} "
                     f"({tiempos['Apriori']:.2f}s)"
                 )
             )
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    f" No se generaron reglas de asociación "
-                    f"({tiempos['Apriori']:.2f}s)"
+                    f"No se generaron reglas de asociacion ({tiempos['Apriori']:.2f}s)"
                 )
             )
 
@@ -120,24 +104,20 @@ class Command(BaseCommand):
         # =====================================================
         inicio = time.perf_counter()
 
-        segmentos = segmentar_clientes_kmeans(
-            n_clusters=3
-        )
+        segmentos = segmentar_clientes_kmeans(n_clusters=3)
 
         tiempos["KMeans"] = time.perf_counter() - inicio
 
         if segmentos:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f" Clientes segmentados: {len(segmentos)} "
-                    f"({tiempos['KMeans']:.2f}s)"
+                    f"Clientes segmentados: {len(segmentos)} ({tiempos['KMeans']:.2f}s)"
                 )
             )
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    f" No se pudo ejecutar KMeans "
-                    f"({tiempos['KMeans']:.2f}s)"
+                    f"No se pudo ejecutar KMeans ({tiempos['KMeans']:.2f}s)"
                 )
             )
 
@@ -148,37 +128,24 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write("=" * 65)
-        self.stdout.write(
-            self.style.SUCCESS(
-                " RESUMEN DE EJECUCIÓN"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS("RESUMEN DE EJECUCION"))
         self.stdout.write("=" * 65)
 
         for nombre, segundos in tiempos.items():
-
-            porcentaje = (
-                segundos / tiempo_total
-            ) * 100
+            porcentaje = (segundos / tiempo_total) * 100
 
             self.stdout.write(
-                f"{nombre:<15}"
-                f"{segundos:>8.2f} s"
-                f"   ({porcentaje:>5.1f}%)"
+                f"{nombre:<15}{segundos:>8.2f} s   ({porcentaje:>5.1f}%)"
             )
 
         self.stdout.write("-" * 65)
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f" Tiempo total: {tiempo_total:.2f} segundos"
-            )
+            self.style.SUCCESS(f"Tiempo total: {tiempo_total:.2f} segundos")
         )
 
         self.stdout.write(
-            self.style.SUCCESS(
-                " Analítica actualizada correctamente"
-            )
+            self.style.SUCCESS("Analitica actualizada correctamente")
         )
 
         self.stdout.write("=" * 65)

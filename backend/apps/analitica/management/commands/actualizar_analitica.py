@@ -31,7 +31,7 @@ class Command(BaseCommand):
         self.stdout.write("=" * 65)
         self.stdout.write(
             self.style.SUCCESS(
-                "🔄 INICIANDO ACTUALIZACIÓN DE ANALÍTICA"
+                " INICIANDO ACTUALIZACIÓN DE ANALÍTICA"
             )
         )
         self.stdout.write("=" * 65)
@@ -103,14 +103,14 @@ class Command(BaseCommand):
         if reglas:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"✔ Reglas de asociación generadas: {len(reglas)} "
+                    f" Reglas de asociación generadas: {len(reglas)} "
                     f"({tiempos['Apriori']:.2f}s)"
                 )
             )
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    f"⚠ No se generaron reglas de asociación "
+                    f" No se generaron reglas de asociación "
                     f"({tiempos['Apriori']:.2f}s)"
                 )
             )
@@ -129,14 +129,14 @@ class Command(BaseCommand):
         if segmentos:
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"✔ Clientes segmentados: {len(segmentos)} "
+                    f" Clientes segmentados: {len(segmentos)} "
                     f"({tiempos['KMeans']:.2f}s)"
                 )
             )
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    f"⚠ No se pudo ejecutar KMeans "
+                    f" No se pudo ejecutar KMeans "
                     f"({tiempos['KMeans']:.2f}s)"
                 )
             )
@@ -150,7 +150,7 @@ class Command(BaseCommand):
         self.stdout.write("=" * 65)
         self.stdout.write(
             self.style.SUCCESS(
-                "📊 RESUMEN DE EJECUCIÓN"
+                " RESUMEN DE EJECUCIÓN"
             )
         )
         self.stdout.write("=" * 65)
@@ -171,13 +171,13 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"⏱ Tiempo total: {tiempo_total:.2f} segundos"
+                f" Tiempo total: {tiempo_total:.2f} segundos"
             )
         )
 
         self.stdout.write(
             self.style.SUCCESS(
-                "✅ Analítica actualizada correctamente"
+                " Analítica actualizada correctamente"
             )
         )
 

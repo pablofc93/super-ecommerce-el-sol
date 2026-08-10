@@ -33,6 +33,10 @@ class Command(BaseCommand):
 
     help = "Carga productos desde utils/seed/productos.txt."
 
+    # =====================================================
+    # RUTA DEL ARCHIVO
+    # =====================================================
+
     def obtener_ruta_archivo(self):
         """
         Devuelve la ruta absoluta del archivo productos.txt.
@@ -44,6 +48,10 @@ class Command(BaseCommand):
             / "seed"
             / "productos.txt"
         )
+
+    # =====================================================
+    # CONVERTIR PRECIO
+    # =====================================================
 
     def convertir_precio(self, valor):
         """
@@ -61,28 +69,46 @@ class Command(BaseCommand):
         valor = str(valor).strip()
 
         if not valor:
-            raise ValueError("El precio está vacío.")
+            raise ValueError(
+                "El precio está vacío."
+            )
 
-        valor = valor.replace("$", "").replace(" ", "")
+        valor = (
+            valor
+            .replace("$", "")
+            .replace(" ", "")
+        )
 
         if "," in valor:
+
             valor = valor.replace(".", "")
             valor = valor.replace(",", ".")
+
         else:
+
             partes = valor.split(".")
 
-            if len(partes) == 2 and len(partes[1]) == 3:
+            if (
+                len(partes) == 2
+                and len(partes[1]) == 3
+            ):
                 valor = "".join(partes)
 
         try:
+
             return Decimal(valor).quantize(
                 Decimal("0.01")
             )
 
         except InvalidOperation as error:
+
             raise ValueError(
                 f"Precio inválido: {valor}"
             ) from error
+
+    # =====================================================
+    # CONVERTIR STOCK
+    # =====================================================
 
     def convertir_stock(self, valor):
         """
@@ -95,25 +121,39 @@ class Command(BaseCommand):
         200    -> 200
         """
 
-        valor = str(valor).strip().replace(".", "")
+        valor = (
+            str(valor)
+            .strip()
+            .replace(".", "")
+        )
 
         if not valor:
-            raise ValueError("El stock está vacío.")
+
+            raise ValueError(
+                "El stock está vacío."
+            )
 
         try:
+
             stock = int(valor)
 
         except ValueError as error:
+
             raise ValueError(
                 f"Stock inválido: {valor}"
             ) from error
 
         if stock < 0:
+
             raise ValueError(
                 f"El stock no puede ser negativo: {stock}"
             )
 
         return stock
+
+    # =====================================================
+    # OBTENER FILAS
+    # =====================================================
 
     def obtener_filas(self, ruta):
         """
@@ -162,6 +202,7 @@ class Command(BaseCommand):
                     partes.pop()
 
                 if len(partes) != 7:
+
                     raise CommandError(
                         f"Línea {numero_linea}: "
                         f"se esperaban 7 columnas y se encontraron "
@@ -179,19 +220,31 @@ class Command(BaseCommand):
                 ) = partes
 
                 try:
-                    id_original = int(id_original)
+
+                    id_original = int(
+                        id_original
+                    )
 
                     precio_convertido = (
-                        self.convertir_precio(precio)
+                        self.convertir_precio(
+                            precio
+                        )
                     )
 
                     stock_convertido = (
-                        self.convertir_stock(stock)
+                        self.convertir_stock(
+                            stock
+                        )
                     )
 
-                    categoria_id = int(categoria_id)
+                    categoria_id = int(
+                        categoria_id
+                    )
 
-                except (ValueError, TypeError) as error:
+                except (
+                    ValueError,
+                    TypeError
+                ) as error:
 
                     raise CommandError(
                         f"Error en línea {numero_linea}: "
@@ -199,6 +252,7 @@ class Command(BaseCommand):
                     ) from error
 
                 if not nombre:
+
                     raise CommandError(
                         f"Línea {numero_linea}: "
                         "el nombre del producto está vacío."
@@ -215,6 +269,10 @@ class Command(BaseCommand):
                 })
 
         return productos
+
+    # =====================================================
+    # CLAVE DEL PRODUCTO
+    # =====================================================
 
     def obtener_clave_producto(self, producto):
         """
@@ -236,6 +294,10 @@ class Command(BaseCommand):
             producto["categoria_id"],
         )
 
+    # =====================================================
+    # PRODUCTOS EXISTENTES
+    # =====================================================
+
     def obtener_productos_existentes(self):
         """
         Devuelve las claves de los productos que ya existen
@@ -244,35 +306,56 @@ class Command(BaseCommand):
 
         existentes = set()
 
-        productos = Producto.objects.all().values(
-            "nombre",
-            "descripcion",
-            "precio",
-            "imagen",
-            "categoria_id",
+        productos = (
+            Producto.objects
+            .all()
+            .values(
+                "nombre",
+                "descripcion",
+                "precio",
+                "imagen",
+                "categoria_id",
+            )
         )
 
         for producto in productos:
+
             existentes.add(
-                self.obtener_clave_producto(producto)
+                self.obtener_clave_producto(
+                    producto
+                )
             )
 
         return existentes
+
+    # =====================================================
+    # ACTUALIZAR SECUENCIA SQLITE
+    # =====================================================
 
     def actualizar_secuencia(self):
         """
         Actualiza sqlite_sequence para productos_producto.
 
-        Si existen productos, deja la secuencia en el ID máximo.
+        SQLite mantiene las secuencias de los modelos con
+        AUTOINCREMENT en la tabla sqlite_sequence.
 
-        Si no existen productos, elimina la entrada de sqlite_sequence
-        para que el próximo INSERT comience nuevamente desde 1.
+        No se utiliza ON CONFLICT porque dependiendo de la
+        versión/configuración de SQLite, la columna name de
+        sqlite_sequence no puede utilizarse como objetivo
+        de una cláusula ON CONFLICT.
+
+        Se realiza primero UPDATE y, si no existe la fila,
+        se realiza INSERT.
         """
 
         if connection.vendor != "sqlite":
             return
 
         with connection.cursor() as cursor:
+
+            # ---------------------------------------------
+            # Obtener ID máximo
+            # ---------------------------------------------
 
             cursor.execute(
                 """
@@ -283,19 +366,48 @@ class Command(BaseCommand):
 
             resultado = cursor.fetchone()
 
-            max_id = resultado[0] if resultado else None
+            max_id = (
+                resultado[0]
+                if resultado and resultado[0] is not None
+                else None
+            )
+
+            # ---------------------------------------------
+            # Si existen productos
+            # ---------------------------------------------
 
             if max_id is not None:
 
                 cursor.execute(
                     """
-                    INSERT INTO sqlite_sequence(name, seq)
-                    VALUES ('productos_producto', %s)
-                    ON CONFLICT(name)
-                    DO UPDATE SET seq = excluded.seq
+                    UPDATE sqlite_sequence
+                    SET seq = %s
+                    WHERE name = 'productos_producto'
                     """,
                     [max_id]
                 )
+
+                filas_actualizadas = cursor.rowcount
+
+                # -----------------------------------------
+                # Si no existía la fila, crearla
+                # -----------------------------------------
+
+                if filas_actualizadas == 0:
+
+                    cursor.execute(
+                        """
+                        INSERT INTO sqlite_sequence
+                        (name, seq)
+                        VALUES
+                        ('productos_producto', %s)
+                        """,
+                        [max_id]
+                    )
+
+            # ---------------------------------------------
+            # Si no existen productos
+            # ---------------------------------------------
 
             else:
 
@@ -306,10 +418,14 @@ class Command(BaseCommand):
                     """
                 )
 
+    # =====================================================
+    # VERIFICAR CATEGORÍAS
+    # =====================================================
+
     def verificar_categorias(self, productos):
         """
-        Verifica que todas las categorías utilizadas por los productos
-        existan antes de realizar la carga.
+        Verifica que todas las categorías utilizadas por los
+        productos existan antes de realizar la carga.
 
         No crea ni modifica categorías.
         """
@@ -344,7 +460,8 @@ class Command(BaseCommand):
             }
 
         categorias_faltantes = (
-            categoria_ids - categorias_existentes
+            categoria_ids
+            - categorias_existentes
         )
 
         if categorias_faltantes:
@@ -355,6 +472,10 @@ class Command(BaseCommand):
                 f"{sorted(categorias_faltantes)}"
             )
 
+    # =====================================================
+    # PROCESO PRINCIPAL
+    # =====================================================
+
     def handle(self, *args, **options):
 
         inicio = time.perf_counter()
@@ -363,18 +484,28 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write("=" * 60)
-        self.stdout.write("CARGADOR DE PRODUCTOS")
+        self.stdout.write(
+            "CARGADOR DE PRODUCTOS"
+        )
         self.stdout.write("=" * 60)
         self.stdout.write(
             f"Archivo: {ruta}"
         )
         self.stdout.write("=" * 60)
 
+        # =================================================
+        # VERIFICAR ARCHIVO
+        # =================================================
+
         if not ruta.exists():
 
             raise CommandError(
                 f"No se encontró el archivo:\n{ruta}"
             )
+
+        # =================================================
+        # LEER PRODUCTOS
+        # =================================================
 
         self.stdout.write("")
         self.stdout.write(
@@ -400,6 +531,10 @@ class Command(BaseCommand):
 
             return
 
+        # =================================================
+        # VERIFICAR CATEGORÍAS
+        # =================================================
+
         self.stdout.write("")
         self.stdout.write(
             "Verificando categorías..."
@@ -409,12 +544,23 @@ class Command(BaseCommand):
             productos_archivo
         )
 
+        # =================================================
+        # OBTENER PRODUCTOS EXISTENTES
+        # =================================================
+
         existentes = (
             self.obtener_productos_existentes()
         )
 
         productos_nuevos = []
+
         claves_procesadas = set()
+
+        # =================================================
+        # DETERMINAR PRODUCTOS NUEVOS
+        # =================================================
+
+        ahora = timezone.now()
 
         for producto in productos_archivo:
 
@@ -424,13 +570,23 @@ class Command(BaseCommand):
                 )
             )
 
+            # ---------------------------------------------
+            # Ya existe en la base
+            # ---------------------------------------------
+
             if clave in existentes:
                 continue
+
+            # ---------------------------------------------
+            # Producto repetido dentro del TXT
+            # ---------------------------------------------
 
             if clave in claves_procesadas:
                 continue
 
-            ahora = timezone.now()
+            # ---------------------------------------------
+            # Crear objeto
+            # ---------------------------------------------
 
             productos_nuevos.append(
                 Producto(
@@ -447,18 +603,29 @@ class Command(BaseCommand):
 
             claves_procesadas.add(clave)
 
+        # =================================================
+        # RESUMEN PREVIO
+        # =================================================
+
         self.stdout.write("")
         self.stdout.write("=" * 60)
         self.stdout.write(
-            f"Productos encontrados : {len(productos_archivo)}"
+            f"Productos encontrados : "
+            f"{len(productos_archivo)}"
         )
         self.stdout.write(
-            f"Productos existentes  : {len(existentes)}"
+            f"Productos existentes  : "
+            f"{len(existentes)}"
         )
         self.stdout.write(
-            f"Productos a insertar  : {len(productos_nuevos)}"
+            f"Productos a insertar  : "
+            f"{len(productos_nuevos)}"
         )
         self.stdout.write("=" * 60)
+
+        # =================================================
+        # NO HAY PRODUCTOS NUEVOS
+        # =================================================
 
         if not productos_nuevos:
 
@@ -472,7 +639,15 @@ class Command(BaseCommand):
 
             return
 
+        # =================================================
+        # COMPROBAR SI LA TABLA ESTABA VACÍA
+        # =================================================
+
         tabla_vacia = not Producto.objects.exists()
+
+        # =================================================
+        # INSERTAR PRODUCTOS
+        # =================================================
 
         self.stdout.write("")
         self.stdout.write(
@@ -486,19 +661,35 @@ class Command(BaseCommand):
                 batch_size=500
             )
 
+            # ---------------------------------------------
+            # Actualizar secuencia SQLite
+            # ---------------------------------------------
+
             self.actualizar_secuencia()
+
+        # =================================================
+        # FIN
+        # =================================================
 
         fin = time.perf_counter()
 
         primer_id = (
-            Producto.objects.order_by("id")
-            .values_list("id", flat=True)
+            Producto.objects
+            .order_by("id")
+            .values_list(
+                "id",
+                flat=True
+            )
             .first()
         )
 
         ultimo_id = (
-            Producto.objects.order_by("-id")
-            .values_list("id", flat=True)
+            Producto.objects
+            .order_by("-id")
+            .values_list(
+                "id",
+                flat=True
+            )
             .first()
         )
 
@@ -530,6 +721,7 @@ class Command(BaseCommand):
         self.stdout.write("")
         self.stdout.write(
             self.style.SUCCESS(
-                f"Tiempo total: {fin - inicio:.2f} segundos"
+                f"Tiempo total: "
+                f"{fin - inicio:.2f} segundos"
             )
         )

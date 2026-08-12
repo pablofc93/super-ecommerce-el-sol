@@ -1,21 +1,26 @@
 <main class="home-page">
   <div class="container py-4 py-lg-5">
+
+    <!-- ===================================== HERO ====================================== -->
     <section class="home-hero">
       <p class="home-eyebrow">Compra simple, todos los días</p>
       <h1>Bienvenido a Super El Sol</h1>
       <p>Tu supermercado online de confianza. Encontrá tus productos favoritos en un solo lugar.</p>
     </section>
 
+    <!-- ===================================== LOADING ====================================== -->
     <div *ngIf="loading" class="home-loading">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando productos...</span>
       </div>
     </div>
 
+    <!-- ===================================== ERROR ====================================== -->
     <div *ngIf="error" class="alert alert-danger" role="alert">
       {{ error }}
     </div>
 
+    <!-- ===================================== PRODUCTOS MÁS VENDIDOS ====================================== -->
     <section *ngIf="productosMasVendidos.length > 0 && !loading" class="home-section featured-section">
       <header class="home-section-header">
         <div>
@@ -25,51 +30,65 @@
       </header>
 
       <div class="carousel-manual carousel-smooth">
-        <div class="carousel-track"
-             [class.carousel-slide-right]="animacionMasVendidos === 'right'"
-             [class.carousel-slide-left]="animacionMasVendidos === 'left'">
+        <div class="carousel-track" [class.carousel-slide-right]="animacionMasVendidos === 'right'" [class.carousel-slide-left]="animacionMasVendidos === 'left'">
+
+          <!-- CARD PRODUCTO MÁS VENDIDO -->
           <article class="featured-product-card" *ngIf="obtenerProductoActualMasVendido() as producto">
+
+            <!-- IMAGEN -->
             <div class="featured-product-media">
               <img [src]="producto.imagen_url || 'assets/no-image.png'" [alt]="producto.nombre" />
             </div>
 
+            <!-- INFORMACIÓN -->
             <div class="featured-product-content">
+
+              <!-- BADGE + CONTADOR -->
               <div class="featured-product-topbar">
                 <span class="featured-product-badge">Más vendido</span>
                 <span class="featured-product-counter">{{ indiceActualMasVendidos + 1 }} / {{ productosMasVendidos.length }}</span>
               </div>
 
+              <!-- NOMBRE -->
               <h3>{{ producto.nombre }}</h3>
+
+              <!-- DESCRIPCIÓN -->
               <p>{{ producto.descripcion }}</p>
 
+              <!-- INFORMACIÓN DEL PRODUCTO -->
               <div class="featured-product-meta">
-                <span class="badge text-bg-light border text-dark" *ngIf="producto.categoria">
-                  {{ producto.categoria.nombre }}
-                </span>
+                <span class="badge text-bg-light border text-dark" *ngIf="producto.categoria">{{ producto.categoria.nombre }}</span>
                 <span class="badge text-bg-success" *ngIf="producto.stock > 0">Disponible</span>
                 <span class="badge text-bg-danger" *ngIf="producto.stock === 0">Sin stock</span>
               </div>
 
+              <!-- PRECIO + BOTÓN -->
               <div class="featured-product-footer">
                 <strong>${{ producto.precio | number: '1.0-2' }}</strong>
-                <button class="btn btn-primary" type="button" (click)="verDetalle(producto.id)">
-                  Ver producto
-                </button>
+                <button class="btn btn-primary" type="button" (click)="verDetalle(producto.id)">Ver producto</button>
               </div>
+
             </div>
           </article>
+
         </div>
 
+        <!-- CONTROL IZQUIERDO -->
         <button class="carousel-control-prev carousel-control-minimal" type="button" (click)="moverMasVendidosIzquierda()" aria-label="Ver productos anteriores">
           <span class="carousel-control-prev-icon"></span>
         </button>
+
+        <!-- CONTROL DERECHO -->
         <button class="carousel-control-next carousel-control-minimal" type="button" (click)="moverMasVendidosDerecha()" aria-label="Ver productos siguientes">
           <span class="carousel-control-next-icon"></span>
         </button>
       </div>
     </section>
 
+    <!-- ===================================== PRODUCTOS POR CATEGORÍA ====================================== -->
     <section *ngFor="let categoria of categoriasVisiblesLista; let idx = index" class="home-section">
+
+      <!-- CABECERA DE CATEGORÍA -->
       <header class="home-section-header">
         <div>
           <p class="section-eyebrow">Explorá la categoría</p>
@@ -77,34 +96,45 @@
         </div>
       </header>
 
+      <!-- CARRUSEL -->
       <div class="carousel-manual carousel-smooth">
-        <div class="carousel-track"
-             [class.carousel-slide-right]="animacionesCategorias.get(idx) === 'right'"
-             [class.carousel-slide-left]="animacionesCategorias.get(idx) === 'left'">
+        <div class="carousel-track" [class.carousel-slide-right]="animacionesCategorias.get(idx) === 'right'" [class.carousel-slide-left]="animacionesCategorias.get(idx) === 'left'">
           <div class="row g-4">
+
+            <!-- PRODUCT CARDS -->
             <div class="col-12 col-sm-6 col-lg-3" *ngFor="let producto of obtenerGrupoActualCategoria(idx)">
-              <app-product-card
-                [producto]="producto"
-                variant="compact"
-                (verDetalle)="verDetalle($event)">
-              </app-product-card>
+              <app-product-card [producto]="producto" variant="compact" (verDetalle)="verDetalle($event)"></app-product-card>
             </div>
+
           </div>
         </div>
 
+        <!-- CONTROL IZQUIERDO -->
         <button class="carousel-control-prev carousel-control-minimal" type="button" (click)="moverCategoriaIzquierda(idx)" aria-label="Ver productos anteriores">
           <span class="carousel-control-prev-icon"></span>
         </button>
+
+        <!-- CONTROL DERECHO -->
         <button class="carousel-control-next carousel-control-minimal" type="button" (click)="moverCategoriaDerecha(idx)" aria-label="Ver productos siguientes">
           <span class="carousel-control-next-icon"></span>
         </button>
       </div>
     </section>
 
+    <!-- ===================================== MOSTRAR MÁS CATEGORÍAS ====================================== -->
     <div class="text-center" *ngIf="categoriasVisibles < categoriasConProductos.length">
-      <button class="btn btn-outline-primary px-4 home-more-button" (click)="mostrarMasCategorias()">
-        Ver más categorías
-      </button>
+      <button class="btn btn-outline-primary px-4 home-more-button" (click)="mostrarMasCategorias()">Ver más categorías</button>
     </div>
+
   </div>
 </main>
+
+<!-- ========================================== MODAL DE AUTENTICACIÓN =========================================== -->
+<app-modal-autenticacion
+  *ngIf="mostrarModalLogin"
+  titulo="Necesitás ingresar"
+  mensaje="Para poder comprar se necesita ingresar al sistema."
+  (ingresar)="irAlLogin()"
+  (registrarse)="irAlRegistro()"
+  (cerrar)="cerrarModalLogin()">
+</app-modal-autenticacion>

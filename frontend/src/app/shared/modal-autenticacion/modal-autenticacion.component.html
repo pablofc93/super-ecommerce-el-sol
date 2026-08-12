@@ -1,0 +1,65 @@
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+
+  <div class="modal-dialog modal-dialog-centered" role="document">
+
+    <div class="modal-content">
+
+      <div class="modal-header">
+
+        <h5 class="modal-title">
+          {{ titulo }}
+        </h5>
+
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Cerrar"
+          (click)="onCerrar()">
+        </button>
+
+      </div>
+
+      <div class="modal-body text-center">
+
+        <p class="mb-3">
+          {{ mensaje }}
+        </p>
+
+        <p class="mb-2">
+          Para continuar, ingresá al sistema.
+        </p>
+
+        <button
+          type="button"
+          class="btn btn-primary w-100 mb-3"
+          (click)="onIngresar()">
+
+          Ingresar
+
+        </button>
+
+        <p class="mb-2">
+          ¿No tienes una cuenta?
+        </p>
+
+        <button
+          type="button"
+          class="btn btn-outline-primary w-100"
+          (click)="onRegistrarse()">
+
+          Registrarse
+
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<div
+  class="modal-backdrop fade show"
+  (click)="onCerrar()">
+</div>

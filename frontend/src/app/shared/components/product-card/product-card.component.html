@@ -21,28 +21,61 @@
     </p>
 
     <div class="product-card-footer mt-auto">
+
       <p class="product-price">
         ${{ producto.precio | number: '1.0-2' }}
       </p>
 
       <div class="product-badges">
-        <span class="badge text-bg-light border text-dark" *ngIf="producto.categoria">
+
+        <span
+          class="badge text-bg-light border text-dark"
+          *ngIf="producto.categoria">
+
           {{ producto.categoria.nombre }}
+
         </span>
-        <span *ngIf="producto.stock > 0" class="badge text-bg-success">
+
+        <span
+          *ngIf="producto.stock > 0"
+          class="badge text-bg-success">
+
           Disponible
+
         </span>
-        <span *ngIf="producto.stock === 0" class="badge text-bg-danger">
+
+        <span
+          *ngIf="producto.stock === 0"
+          class="badge text-bg-danger">
+
           Sin stock
+
         </span>
+
       </div>
+
     </div>
 
-    <button class="btn btn-primary product-card-button"
-            (click)="onClick()">
+    <button
+      class="btn btn-primary product-card-button"
+      (click)="onClick()">
+
       Comprar
+
     </button>
 
   </div>
 
 </article>
+
+
+<!-- MODAL DE AUTENTICACIÓN -->
+
+<app-modal-autenticacion
+  *ngIf="mostrarModalLogin"
+  titulo="Necesitás ingresar"
+  mensaje="Para poder comprar se necesita ingresar al sistema."
+  (ingresar)="irAlLogin()"
+  (registrarse)="irAlRegistro()"
+  (cerrar)="cerrarModalLogin()">
+</app-modal-autenticacion>

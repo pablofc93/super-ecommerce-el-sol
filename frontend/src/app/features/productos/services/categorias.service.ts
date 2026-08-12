@@ -15,9 +15,7 @@ export class CategoriasService {
 
   listar(): Observable<Categoria[]> {
 
-    return this.http.get<any>(`${this.apiUrl}?all=true`, {
-      withCredentials: true
-    }).pipe(
+    return this.http.get<any>(`${this.apiUrl}?all=true`).pipe(
 
       map((resp) => {
 

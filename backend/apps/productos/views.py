@@ -105,6 +105,12 @@ class CategoriaViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ["nombre"]
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+
+        return [IsAdminUser()]
+
     def list(self, request, *args, **kwargs):
 
         if request.query_params.get("all") == "true":

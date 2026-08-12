@@ -664,16 +664,17 @@ La instalación mediante seeds permite generar usuarios y clientes de prueba.
 ### Administrador
 
 ```text
-Usuario: [PENDIENTE]
-Contraseña: [PENDIENTE]
+Usuario: admin_test
+Contraseña: 123456
 ```
 
 ### Cliente
 
 ```text
-Usuario: [PENDIENTE]
-Contraseña: [PENDIENTE]
+Usuario: cliente000001
+Contraseña: 123456
 ```
+Nota: todos los clientes creados/cargados tienen la misma contraseña (cliente000002, cliente000003, cliente000123, etc).
 
 > Las credenciales de prueba deben modificarse en entornos reales y no deben utilizarse para instalaciones destinadas a producción.
 

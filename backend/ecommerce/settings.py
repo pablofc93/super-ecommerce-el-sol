@@ -74,15 +74,15 @@ MIDDLEWARE = [
 
 
 # =========================
-# CORS
+# CORS - esto sirve para indicar a Django que acepte peticiones de estos 2 orígenes
 # =========================
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
+    "http://localhost:4200", #origen de Angular - frontend
+    "http://127.0.0.1:4200", #origen de Django - backend
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True #esto indica a Django que permita el uso de credenciales 
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
@@ -154,7 +154,7 @@ DATABASES = {
 
 
 # =========================
-# Password validation
+# Validación de contraseña
 # =========================
 
 AUTH_PASSWORD_VALIDATORS = [

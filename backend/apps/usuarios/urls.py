@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path #se importa path que es una función de django para definir rutas
 from .views import ChangePasswordView
 from .views import (
     RegisterView,
@@ -14,12 +14,12 @@ from .views import (
 
 urlpatterns = [
     path('csrf/', get_csrf, name='csrf'),
-    path('register/', RegisterView.as_view(), name='register'),
+    path('register/', RegisterView.as_view(), name='register'), #define la url /register y cuando llega una petición a esa url se envia esa url a la vista RegisterView
     path('login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('me/', MeView.as_view(), name='me'),
 
-    # 🔥 ADMIN
+    # ADMIN
     path('admin/listar/', AdminListarUsuariosView.as_view()),
     path('admin/crear/', AdminCrearUsuarioView.as_view()),
     path('admin/<int:user_id>/rol/', AdminCambiarRolView.as_view()),

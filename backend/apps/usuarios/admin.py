@@ -2,7 +2,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import Usuario
 
-
+#@admin es un decorador que permite registrar el modelo Usuario en
+#el panel de administración de Django utilizando la clase
+#UsuarioAdmin
 @admin.register(Usuario)
 class UsuarioAdmin(UserAdmin):
     """
@@ -32,7 +34,7 @@ class UsuarioAdmin(UserAdmin):
         'email',
     )
 
-    # Orden por defecto
+    # Orden por defecto, el - significa ordenar en orden descendente
     ordering = ('-fecha_registro',)
 
     # Campos adicionales al editar

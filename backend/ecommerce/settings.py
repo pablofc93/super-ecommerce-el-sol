@@ -1,13 +1,15 @@
+
 """
 Django settings for ecommerce project.
-Generado por 'django-admin startproject' usando Django 5.2.8
 """
 
 import os
 from pathlib import Path
 
 from corsheaders.defaults import default_headers, default_methods
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,11 +19,34 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-local-development-only-change-me"
+    else:
+        raise ImproperlyConfigured(
+            "Debes configurar SECRET_KEY en las variables de entorno."
+        )
+
+# Render proporciona RENDER_EXTERNAL_HOSTNAME automáticamente.
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS", "127.0.0.1,localhost"
+    ).split(",")
+    if host.strip()
+]
+
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+# Eliminar posibles duplicados.
+ALLOWED_HOSTS = list(dict.fromkeys(ALLOWED_HOSTS))
 
 
 # =========================
@@ -29,32 +54,29 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 # =========================
 
 INSTALLED_APPS = [
-    # Django
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django_extensions',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django_extensions",
 
-    # Terceros
-    'rest_framework',
-    'corsheaders',
-    'django_filters',
+    "rest_framework",
+    "corsheaders",
+    "django_filters",
 
-    # Apps del proyecto
-    'apps.clientes.apps.ClientesConfig',
-    'apps.adminpanel.apps.AdminpanelConfig',
-    'apps.productos.apps.ProductosConfig',
-    'apps.pedidos.apps.PedidosConfig',
-    'apps.usuarios.apps.UsuariosConfig',
-    'apps.analitica.apps.AnaliticaConfig',
-    'apps.recomendacion.apps.RecomendacionConfig',
-    'apps.reporting.apps.ReportingConfig',
+    "apps.clientes.apps.ClientesConfig",
+    "apps.adminpanel.apps.AdminpanelConfig",
+    "apps.productos.apps.ProductosConfig",
+    "apps.pedidos.apps.PedidosConfig",
+    "apps.usuarios.apps.UsuariosConfig",
+    "apps.analitica.apps.AnaliticaConfig",
+    "apps.recomendacion.apps.RecomendacionConfig",
+    "apps.reporting.apps.ReportingConfig",
 ]
 
-AUTH_USER_MODEL = 'usuarios.Usuario'
+AUTH_USER_MODEL = "usuarios.Usuario"
 
 
 # =========================
@@ -62,27 +84,35 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 # =========================
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+
+    # Debe ubicarse después de SecurityMiddleware.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
+    "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 
 # =========================
-# CORS - esto sirve para indicar a Django que acepte peticiones de estos 2 orígenes
+# CORS
 # =========================
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:4200", #origen de Angular - frontend
-    "http://127.0.0.1:4200", #origen de Django - backend
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:4200,http://127.0.0.1:4200",
+    ).split(",")
+    if origin.strip()
 ]
 
-CORS_ALLOW_CREDENTIALS = True #esto indica a Django que permita el uso de credenciales 
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
@@ -92,29 +122,39 @@ CORS_ALLOW_METHODS = list(default_methods)
 
 
 # =========================
-# CSRF
+# CSRF y cookies
 # =========================
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:4200",
-    "http://127.0.0.1:4200",
+    origin.strip()
+    for origin in os.getenv(
+        "CSRF_TRUSTED_ORIGINS",
+        "http://localhost:4200,http://127.0.0.1:4200",
+    ).split(",")
+    if origin.strip()
 ]
 
-CSRF_COOKIE_SAMESITE = "Lax"
-SESSION_COOKIE_SAMESITE = "Lax"
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "Lax")
+
+CSRF_COOKIE_SAMESITE = COOKIE_SAMESITE
+SESSION_COOKIE_SAMESITE = COOKIE_SAMESITE
 
 CSRF_COOKIE_HTTPONLY = False
 
-# Importante para desarrollo con frontend separado
-CSRF_COOKIE_SECURE = False
-SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+
+# Render utiliza un proxy HTTPS delante de Django.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 
 # =========================
-# URLs
+# URLs y WSGI
 # =========================
 
-ROOT_URLCONF = 'ecommerce.urls'
+ROOT_URLCONF = "ecommerce.urls"
+
+WSGI_APPLICATION = "ecommerce.wsgi.application"
 
 
 # =========================
@@ -123,52 +163,64 @@ ROOT_URLCONF = 'ecommerce.urls'
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'django.template.context_processors.media',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.media",
             ],
         },
     },
 ]
 
 
-WSGI_APPLICATION = 'ecommerce.wsgi.application'
-
-
 # =========================
-# Database
+# Base de datos
 # =========================
 
+# Se conserva SQLite y la ubicación actual del archivo.
+# Si settings.py está en backend/ecommerce/settings.py,
+# BASE_DIR apunta a la carpeta backend.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
 
 
 # =========================
-# Validación de contraseña
+# Validación de contraseñas
 # =========================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "UserAttributeSimilarityValidator"
+        )
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "MinimumLengthValidator"
+        )
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "CommonPasswordValidator"
+        )
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'
+        "NAME": (
+            "django.contrib.auth.password_validation."
+            "NumericPasswordValidator"
+        )
     },
 ]
 
@@ -177,54 +229,76 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internacionalización
 # =========================
 
-LANGUAGE_CODE = 'es-ar'
-TIME_ZONE = 'America/Argentina/Buenos_Aires'
+LANGUAGE_CODE = "es-ar"
+
+TIME_ZONE = "America/Argentina/Buenos_Aires"
+
 USE_I18N = True
 USE_TZ = True
 
 
 # =========================
-# Static & Media
+# Archivos estáticos
 # =========================
 
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = "/static/"
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# WhiteNoise comprime y sirve los archivos estáticos
+# recopilados mediante collectstatic.
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        ),
+    },
+}
 
 
 # =========================
-# Default PK
+# Archivos multimedia
 # =========================
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # =========================
-# Django Rest Framework
+# Clave primaria predeterminada
+# =========================
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# =========================
+# Django REST Framework
 # =========================
 
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
     ],
 
-    # =========================
-    # PAGINACION GLOBAL
-    # =========================
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 15,
+    "DEFAULT_PAGINATION_CLASS": (
+        "rest_framework.pagination.PageNumberPagination"
+    ),
 
-    # =========================
-    # FILTROS
-    # =========================
-    'DEFAULT_FILTER_BACKENDS': [
-        'rest_framework.filters.SearchFilter',
+    "PAGE_SIZE": 15,
+
+    "DEFAULT_FILTER_BACKENDS": [
+        "rest_framework.filters.SearchFilter",
     ],
 }

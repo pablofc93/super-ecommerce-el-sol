@@ -1,20 +1,20 @@
 # Este signal sirve para que cada vez que se cree una compra, se reste
 # automáticamente del stock del producto.
 
-from django.db.models.signals import post_save, pre_save, post_delete
+from django.db.models.signals import post_save, pre_save, post_delete #señales que se ejecutan de forma automática
 from django.dispatch import receiver
 from .models import Compra, Producto
 
 
 # =========================================
-# RESTAR STOCK CUANDO SE CREA UNA COMPRA
+# RESTAR STOCK CUANDO SE CREA UNA COMPRA - post_save
 # =========================================
 @receiver(post_save, sender=Compra)
 def actualizar_stock(sender, instance, created, **kwargs):
     """
     Cada vez que se crea una Compra, se resta la cantidad del stock del Producto.
     """
-    if created:
+    if created: #si created es True, se obtiene el producto relacionado
         producto = instance.producto
         if producto.stock >= instance.cantidad:
             producto.stock -= instance.cantidad
@@ -25,19 +25,19 @@ def actualizar_stock(sender, instance, created, **kwargs):
 
 
 # =========================================
-# ELIMINAR IMAGEN AL BORRAR PRODUCTO
+# ELIMINAR IMAGEN AL BORRAR PRODUCTO - post_delete
 # =========================================
-@receiver(post_delete, sender=Producto)
+@receiver(post_delete, sender=Producto) #sender=Producto significa: esta señal está asociada al modelo Producto
 def eliminar_imagen_producto(sender, instance, **kwargs):
     """
     Elimina la imagen del sistema de archivos cuando se elimina un producto.
     """
     if instance.imagen:
-        instance.imagen.delete(save=False)
+        instance.imagen.delete(save=False) #save=False indica que no es necesario volver a guardar el objeto Producto, ya que fue eliminado de la bd
 
 
 # =========================================
-# ELIMINAR IMAGEN VIEJA AL REEMPLAZARLA
+# ELIMINAR IMAGEN VIEJA AL REEMPLAZARLA - pre_save
 # =========================================
 @receiver(pre_save, sender=Producto)
 def eliminar_imagen_anterior(sender, instance, **kwargs):

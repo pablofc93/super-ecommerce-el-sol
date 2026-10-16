@@ -6,16 +6,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
+    #es la primera migración que se crea para el modelo Cliente
     initial = True
 
+    # antes de ejecutar esta migración se debe ejecutar 
+    # la migración de la app usuarios, ya que el modelo 
+    # Cliente tiene una relación con el modelo User de la app usuarios
     dependencies = [
         ('usuarios', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Cliente',
+            name='Cliente', #crear una tabla denominada Cliente
             fields=[
                 ('id_cliente', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, related_name='cliente', serialize=False, to=settings.AUTH_USER_MODEL)),
                 ('direccion', models.CharField(max_length=255)),

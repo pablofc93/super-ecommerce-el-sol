@@ -25,24 +25,25 @@ def limpiar_datos():
 # PRODUCTOS MÁS VENDIDOS
 # =====================================================
 def calcular_productos_mas_vendidos():
-    from datetime import date
+    #from datetime import date
 
-    hoy = date.today()
+    hoy = date.today() # obtener la fecha actual
 
     # 🔥 LIMPIAR SOLO HOY
     ProductoMasVendido.objects.filter(fecha_calculo=hoy).delete()
 
     resultados = (
-        PedidoItem.objects
-        .values('producto_id', 'producto__nombre')
-        .annotate(total_vendido=Sum('cantidad'))
-        .filter(total_vendido__gt=0)
-        .order_by('-total_vendido')
+        PedidoItem.objects # modelo que contiene los productos incluidos en los pedidos
+        .values('producto_id', 'producto__nombre') # son los campos que se van a obtener de los registros, además se agrupan de acuerdo a estos campos
+        .annotate(total_vendido=Sum('cantidad')) # agrega el campo calculado total_vendido, que suma las cantidades de los productos
+        .filter(total_vendido__gt=0) # filtra los productos con total_vendido mayor que 0
+        .order_by('-total_vendido') # ordener por el campo total_vendido en orden descendente
     )
 
+    # una vez obtenidos los productos más vendidos, se los registra en la tabla de ProductoMasVendido de la bd
     for r in resultados:
         ProductoMasVendido.objects.create(
-            producto_id=r['producto_id'],
+            producto_id=r['producto_id'], # producto_id almacena el valor de r.producto_id, del producto obtenido en la consulta anterior
             nombre_producto=r['producto__nombre'],
             total_vendido=r['total_vendido'],
             fecha_calculo=hoy
@@ -50,7 +51,7 @@ def calcular_productos_mas_vendidos():
 
 
 # =====================================================
-# CATEGORÍAS MÁS MOVIDAS
+# CATEGORÍAS MÁS MOVIDAS (categorías de productos que tienen mayores ventas)
 # =====================================================
 def calcular_categorias_mas_movidas():
     hoy = date.today()
@@ -58,12 +59,13 @@ def calcular_categorias_mas_movidas():
     resultados = (
         PedidoItem.objects
         .filter(pedido__estado__in=['pagado', 'enviado', 'entregado'])
-        .values('producto__categoria_id', 'producto__categoria__nombre')
-        .annotate(total_movimiento=Sum('cantidad'))
-        .filter(total_movimiento__gt=0)
+        .values('producto__categoria_id', 'producto__categoria__nombre') # se obtiene el id de la categoria asociada al producto del pedido y el nombre de esa categoria
+        .annotate(total_movimiento=Sum('cantidad')) # suma las cantidades de los productos asociado a cada categoria
+        .filter(total_movimiento__gt=0) # filtra las categorías que tuvieron un movimiento mayor que 0
         .order_by('-total_movimiento')
     )
 
+    # una vez obtenidas las categorías con mayor movimiento, se las registra en la tabla CategoríaMasMovida de la bd
     for r in resultados:
         CategoriaMasMovida.objects.create(
             categoria_id=r['producto__categoria_id'],

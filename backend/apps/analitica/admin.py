@@ -8,7 +8,7 @@ from .models import (
     ClienteSegmentado
 )
 
-admin.site.register(ProductoMasVendido)
+admin.site.register(ProductoMasVendido) # registra el modelo ProductoMasVendido en el panel administrativo de Django
 admin.site.register(CategoriaMasMovida)
 admin.site.register(ReglaAsociacion)
 admin.site.register(ClienteSegmentado)

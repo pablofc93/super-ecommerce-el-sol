@@ -17,22 +17,24 @@ class Carrito(models.Model):
     creado_en = models.DateTimeField(auto_now_add=True)
     activo = models.BooleanField(default=True)
 
+    #este método permite obtener una representación textual del objeto carrito
     def __str__(self):
         return f"Carrito de {self.cliente.id_cliente.username}"
 
-
+# modelo CarritoItem
+#representa un producto concreto incluido dentro de un carrito
 class CarritoItem(models.Model):
-    carrito = models.ForeignKey(
+    carrito = models.ForeignKey( #india que un carrito puede tener muchos CarritoItems
         Carrito,
         on_delete=models.CASCADE,
-        related_name='items'
+        related_name='items' #sirve para acceder a los items del carrito que están dentro de un carrito en particular
     )
     producto = models.ForeignKey(
         Producto,
         on_delete=models.CASCADE,
-        related_name='carrito_items'
+        related_name='carrito_items' #sirve para acceder a los items del carrito que están relacionados con un producto en particular
     )
-    cantidad = models.PositiveIntegerField(default=1)
+    cantidad = models.PositiveIntegerField(default=1) #garantiza que no se almacenen valores negativos
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
@@ -50,7 +52,7 @@ class CarritoItem(models.Model):
 # =========================
 # PEDIDO
 # =========================
-
+# representa una compra confirmada por un cliente
 class Pedido(models.Model):
     ESTADO_CHOICES = (
         ('pendiente', 'Pendiente'),
@@ -64,7 +66,7 @@ class Pedido(models.Model):
     cliente = models.ForeignKey(
         Cliente,
         on_delete=models.CASCADE,
-        related_name='pedidos'
+        related_name='pedidos' #permite consultar los pedidos de un cliente mediante cliente.pedidos.all()
     )
     fecha = models.DateTimeField(
         default=timezone.now
@@ -76,6 +78,7 @@ class Pedido(models.Model):
         default='pendiente'
     )
 
+    #esto crea una representación del objeto en forma de texto. ej: pedido #25 - Cliente00001
     def __str__(self):
         return f"Pedido #{self.id_pedido} - {self.cliente.id_cliente.username}"
 

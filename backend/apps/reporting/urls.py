@@ -24,7 +24,7 @@ urlpatterns = [
         ReportesHistoricosView.as_view()
     ),
 
-    # 🔥 NUEVO
+    
     path(
         'registrar-acceso/',
         RegistrarAccesoView.as_view()

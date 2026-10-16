@@ -18,21 +18,22 @@ class ProductoAdmin(admin.ModelAdmin):
         "precio",
         "stock",
         "creado_en",
-        "imagen_preview",  # 👈 vista previa
+        "imagen_preview",  # 👈 vista previa de la imagen
     )
     list_filter = ("categoria",)
     search_fields = ("nombre",)
     readonly_fields = ("imagen_preview",)
 
-    def imagen_preview(self, obj):
-        if obj.imagen:
+    #genera una vista previa de la imagen asociada al producto
+    def imagen_preview(self, obj): #obj es el producto del cual se analiza la imagen
+        if obj.imagen: #se verifica si el producto tiene una imagen asociada
             return format_html(
                 '<img src="{}" style="width: 80px; height: auto; border-radius: 6px;" />',
                 obj.imagen.url
             )
         return "Sin imagen"
 
-    imagen_preview.short_description = "Imagen"
+    imagen_preview.short_description = "Imagen" #establece el nombre que tendrá la columna dentro del panel administrativo
 
 
 @admin.register(Compra)

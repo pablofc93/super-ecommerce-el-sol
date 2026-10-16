@@ -90,6 +90,7 @@ class RegisterView(APIView):
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
+    # se recibe la solicitud y se etrae el usuario y la contraseña
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')

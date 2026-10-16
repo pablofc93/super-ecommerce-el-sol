@@ -8,7 +8,7 @@ class ClienteAdmin(admin.ModelAdmin):
     Configuración del admin para el modelo Cliente
     """
 
-    # Columnas visibles en la lista
+    # tupla que muestra las columnas visibles en la lista
     list_display = (
         'get_username',
         'get_email',
@@ -50,14 +50,15 @@ class ClienteAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return ('id_cliente',)
+            return ('id_cliente',) #indica que el id_cliente es de solo lectura
         return ()
 
-    # Métodos auxiliares para mostrar datos del usuario
+    # Sirve para obtener el nombre de Usuario asociado al cliente actual
     def get_username(self, obj):
         return obj.id_cliente.username
-    get_username.short_description = 'Usuario'
+    get_username.short_description = 'Usuario' #eso indica que nombre se debe mostrar como encabezado de la columna
 
+    # Sirve para obtener el Email del usuario actual
     def get_email(self, obj):
         return obj.id_cliente.email
     get_email.short_description = 'Email'

@@ -33,6 +33,8 @@ from django.db import transaction
 # =====================================================
 def calcular_demanda_productos(fecha_inicio=None, fecha_fin=None):
 
+    # se crea un diccionario de filtros que contiene las condiciones que deberían cumplir los registros
+    # obtenidos de la base de datos para ser considerados en el cálculo de la demanda por producto
     filtros = {
         "pedido__estado__in": [
             "pagado",
@@ -41,6 +43,7 @@ def calcular_demanda_productos(fecha_inicio=None, fecha_fin=None):
         ]
     }
 
+    # estas condiciones comprueban si se han proporcionado fechas de inicio y fin para filtrar los registros por fecha
     if fecha_inicio:
         filtros["pedido__fecha__date__gte"] = fecha_inicio
 
@@ -49,7 +52,7 @@ def calcular_demanda_productos(fecha_inicio=None, fecha_fin=None):
 
     return (
         PedidoItem.objects
-        .filter(**filtros)
+        .filter(**filtros) # ** permite covertir el diccionario en argumentos nombrados para .filter()
         .values(
             "producto_id",
             "producto__nombre",
@@ -67,6 +70,7 @@ def calcular_demanda_productos(fecha_inicio=None, fecha_fin=None):
 # =====================================================
 def calcular_demanda_categorias(fecha_inicio=None, fecha_fin=None):
 
+    # se filtran los registros de PedidoItem según el estado del pedido y las fechas proporcionadas, si las hay.
     filtros = {
         "pedido__estado__in": [
             "pagado",
@@ -82,9 +86,9 @@ def calcular_demanda_categorias(fecha_inicio=None, fecha_fin=None):
         filtros["pedido__fecha__date__lte"] = fecha_fin
 
     return (
-        PedidoItem.objects
-        .filter(**filtros)
-        .values(
+        PedidoItem.objects # PedidoItem representa los productos incluidos dentro de los pedidos
+        .filter(**filtros) # se aplican los filtros definidos previamente. ** permite pasar el diccionario como argumentos al método .filter()
+        .values( # agrupa por categoría
             "producto__categoria_id",
             "producto__categoria__nombre",
         )
@@ -97,21 +101,29 @@ def calcular_demanda_categorias(fecha_inicio=None, fecha_fin=None):
 
 # =====================================================
 # ACTUALIZAR PRODUCTOS MÁS VENDIDOS
+#
+# recalcula y actualiza la tabla de ProductoMasVendido
+# utilizando las ventas históricas actuales
 # =====================================================
 def actualizar_demanda_productos():
 
-    hoy = date.today()
+    # obtener la fecha de cálculo
+    hoy = date.today() 
+
+    #eliminar los resultados anteriores
+    t = time.perf_counter() # se guarda el instante de inicio de la operación
+    ProductoMasVendido.objects.all().delete() # elimina los registros existentes
+    print(f"DELETE: {time.perf_counter()-t:.3f}s") # muestra el tiempo de la operación delete
+
+    # 
+    t = time.perf_counter()
+    resultados = list(calcular_demanda_productos()) # se obtiene una lista con los resultados de la demanda por productos
+    print(f"SELECT: {time.perf_counter()-t:.3f}s") # se muestra el tiempo de la operación para calcular
 
     t = time.perf_counter()
-    ProductoMasVendido.objects.all().delete()
-    print(f"DELETE: {time.perf_counter()-t:.3f}s")
 
-    t = time.perf_counter()
-    resultados = list(calcular_demanda_productos())
-    print(f"SELECT: {time.perf_counter()-t:.3f}s")
-
-    t = time.perf_counter()
-
+    # se crean los objetos de los productos más vendidos para posteriormente almacenarlos en la bd
+    # estos objetos se crean todos en memoria y luego se los almacena de una sola vez
     objetos = [
         ProductoMasVendido(
             producto_id=r["producto_id"],
@@ -126,6 +138,8 @@ def actualizar_demanda_productos():
 
     t = time.perf_counter()
 
+    # se insertan todos los productos mediante una única consulta
+    # esta única consulta es una transacción atómica
     with transaction.atomic():
         ProductoMasVendido.objects.bulk_create(
             objetos,
@@ -138,6 +152,7 @@ def actualizar_demanda_productos():
 
 # =====================================================
 # ACTUALIZAR CATEGORÍAS MÁS MOVIDAS
+# recalcula y actualiza en la base de datos las categorías que tienen mayor movimiento/venta histórica
 # =====================================================
 def actualizar_categorias_mas_movidas():
     """
@@ -147,7 +162,9 @@ def actualizar_categorias_mas_movidas():
 
     hoy = date.today()
 
-    resultados = list(calcular_demanda_categorias())
+    # se llama la a la funcion calcular_demanda_categorias() 
+    # que se encarga de realizar todo el cálculo correspondiente
+    resultados = list(calcular_demanda_categorias()) 
 
     objetos = [
         CategoriaMasMovida(
@@ -171,16 +188,18 @@ def actualizar_categorias_mas_movidas():
 
 # =====================================================
 # DEMANDA POR PERÍODO
+# calcula cuántas unidades de productos se vendieron
+# agrupadas por un período de tiempo
 # =====================================================
-def demanda_por_periodo(periodo="mes"):
+def demanda_por_periodo(periodo="mes"): # este método recibe como parámetro un perioodo predeterminado denominado "mes"
 
-    if periodo == "dia":
+    if periodo == "dia": # si se agrupa por día, se utiliza la fecha completa
         fecha_field = "pedido__fecha__date"
 
-    elif periodo == "anio":
+    elif periodo == "anio": # si se agrupa por año, se extrañe el año de la fecha
         fecha_field = "pedido__fecha__year"
 
-    else:
+    else: # si se agrupa por mes, se extrae el mes de la fecha
         fecha_field = "pedido__fecha__month"
 
     return (
@@ -194,7 +213,7 @@ def demanda_por_periodo(periodo="mes"):
         )
         .values(fecha_field)
         .annotate(
-            total_vendido=Sum("cantidad")
+            total_vendido=Sum("cantidad") # cantidad representa la cantidad de unidades que contiene cada PedidoItem.
         )
         .order_by(fecha_field)
     )
@@ -203,6 +222,9 @@ def demanda_por_periodo(periodo="mes"):
 # =====================================================
 # PRODUCTOS CON BAJA DEMANDA
 # =====================================================
+
+# el parámetro min_ventas indica que el máximo de unidades vendidas que debe tener
+# un producto para ser considerado de baja demanda es 5
 def productos_baja_demanda(min_ventas=5):
 
     return (
@@ -214,14 +236,14 @@ def productos_baja_demanda(min_ventas=5):
                 "entregado",
             ]
         )
-        .values(
+        .values( # agrupa por nombre de producto
             "producto_id",
             "producto__nombre",
         )
         .annotate(
             total_vendido=Sum("cantidad")
         )
-        .filter(
+        .filter( #filtra los productos cuyo total vendido sea menor o igual al limite establecido
             total_vendido__lte=min_ventas
         )
         .order_by("total_vendido")

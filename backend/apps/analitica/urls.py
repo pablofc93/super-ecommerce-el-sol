@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path # from modulo import elemento
 from .views import (
     DashboardAnaliticoView,
     ProductosMasVendidosView,
@@ -14,19 +14,13 @@ from .views import (
 
 urlpatterns = [
     path('dashboard/', DashboardAnaliticoView.as_view()),
-
     path('productos-mas-vendidos/', ProductosMasVendidosView.as_view()),
     path('productos-mas-vendidos-agrupados/', ProductosMasVendidosAgrupadosView.as_view()),
-
     path('categorias-mas-movidas/', CategoriasMasMovidasAgrupadasView.as_view()),
-
     path('clientes-segmentados/', ClientesSegmentadosView.as_view()),
     path('reglas-asociacion/', ReglasAsociacionView.as_view()),
-
     path('demanda-mensual/', DemandaPorMesView.as_view()),
-
     path('ventas-mensuales/', VentasPorMesView.as_view()),
-
     path('productos-mas-vendidos-public/', ProductosMasVendidosPublicView.as_view()),
 
     path(

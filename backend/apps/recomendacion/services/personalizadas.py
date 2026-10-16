@@ -11,8 +11,10 @@ class RecomendacionPersonalizadaService:
     - categorías favoritas
     - fallback a productos más vendidos (analítica)
     """
-
-    @staticmethod
+    # es un método estático, es decir, no necesita trabajar desde la instancia de esta clase, sino dentro de
+    # la propia clase
+    # * indica que los parámetros que aparecen después deben proporcionarse utilizando argumentos nombrados
+    @staticmethod # indica que es un método estático
     def recomendar_productos_por_cliente(*, cliente_id, limite=5):
         """
         Recomienda productos según el historial de compras del cliente.
@@ -20,27 +22,34 @@ class RecomendacionPersonalizadaService:
         """
 
         # ---------------------------------------------
-        # 1️⃣ Productos comprados por el cliente
+        # 1️⃣ Consulta de productos comprados por el cliente
         # ---------------------------------------------
+        # productos_comprados contiene los id de los productos que el cliente compró en pedidos
+        # considerados válidos
         productos_comprados = PedidoItem.objects.filter(
             pedido__cliente__id_cliente=cliente_id,
             pedido__estado__in=['pagado', 'enviado', 'entregado']
-        ).values_list('producto_id', flat=True)
+        ).values_list('producto_id', flat=True) # se obtiene solamente los id de los productos y flat true hace que se devuelvan directamente esos valores
 
+        # si productos_comprados no contiene ningún elemento
+        # se devuelve
         if not productos_comprados.exists():
             return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
 
         # ---------------------------------------------
         # 2️⃣ Categorías favoritas del cliente
+        # obtiene los IDs de las categorías ordenados según la frecuencia de compra
         # ---------------------------------------------
         categorias_favoritas = (
             Producto.objects.filter(id__in=productos_comprados)
-            .values('categoria_id')
-            .annotate(total=Count('categoria_id'))
+            .values('categoria_id') # se selecciona la categoría asociada al producto comprado
+            .annotate(total=Count('categoria_id')) # total es un campo calculado que almacena la cant de cada cat.
             .order_by('-total')
             .values_list('categoria_id', flat=True)
         )
 
+        # si no hay categorías favorita se ejecua el metodo auxiliar y devuelve (por defecto)
+        # los productos más vendidos
         if not categorias_favoritas:
             return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
 
@@ -58,9 +67,12 @@ class RecomendacionPersonalizadaService:
         # ---------------------------------------------
         if not recomendaciones.exists():
             return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
+            # si el cliente no compró nunca, se muestran los 5 productos más vendidos a nivel global
 
         return recomendaciones
 
+    # este método, en lugar de utilizar todas las categorías (como el anterior) identifica
+    # solamente la categoría que más compró y recomienda productos de esa categoría
     @staticmethod
     def recomendar_por_categoria_favorita(*, cliente_id, limite=5):
         """
@@ -69,10 +81,14 @@ class RecomendacionPersonalizadaService:
         """
 
         productos_comprados = PedidoItem.objects.filter(
-            pedido__cliente__id_cliente=cliente_id,
-            pedido__estado__in=['pagado', 'enviado', 'entregado']
-        ).values_list('producto_id', flat=True)
+            # buscar todos los pedidoitem cuyo pedido 
+            # pertenece a un cliente cuyo id_cliente coincide con id_cliente del parámetro
+            pedido__cliente__id_cliente=cliente_id, 
 
+            pedido__estado__in=['pagado', 'enviado', 'entregado']
+        ).values_list('producto_id', flat=True) # solo devuelve producto_id, no todos los campos de PedidoItem
+
+        # si el cliente no compró productos, por defecti, se devuelven los 5 productos más vendidos
         if not productos_comprados.exists():
             return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
 
@@ -81,10 +97,10 @@ class RecomendacionPersonalizadaService:
         # ---------------------------------------------
         categoria_favorita = (
             Producto.objects.filter(id__in=productos_comprados)
-            .values('categoria_id')
+            .values('categoria_id') # el resultado solo va a mostrar el id de la categoria
             .annotate(total=Count('categoria_id'))
             .order_by('-total')
-            .first()
+            .first() # obtiene el primer resultado
         )
 
         if not categoria_favorita:

@@ -12,14 +12,14 @@ urlpatterns = [
     # =========================
     # AUTH / USUARIOS
     # =========================
-    path('api/auth/', include('apps.usuarios.urls')),
+    path('api/auth/', include('apps.usuarios.urls')), # ese endpoint maneja las solicitudes de login, logout y registro de usuarios. Recibe la solicitud y la dirige a las urls de la app de usuarios 
 
     # =========================
     # ECOMMERCE
     # =========================
-    path('api/clientes/', include('apps.clientes.urls')),
-    path('api/productos/', include('apps.productos.urls')),
-    path('api/pedidos/', include('apps.pedidos.urls')),
+    path('api/clientes/', include('apps.clientes.urls')), # CLIENTES
+    path('api/productos/', include('apps.productos.urls')), # PRODUCTOS
+    path('api/pedidos/', include('apps.pedidos.urls')), # PEDIDOS
 
     # =========================
     # RECOMENDACIÓN (✅ CORREGIDO)

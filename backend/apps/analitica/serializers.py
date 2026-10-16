@@ -1,5 +1,7 @@
+# el objetivo de este archivo es convertir los objetos de los modelos en JSON
+# y validar los datos antes de guardarlos en la base de datos
 from rest_framework import serializers
-from .models import (
+from .models import ( # se importan los modelos de models.py de la misma app, por eso el .
     ProductoMasVendido,
     CategoriaMasMovida,
     ReglaAsociacion,
@@ -21,7 +23,7 @@ class ProductoMasVendidoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProductoMasVendido
-        fields = '__all__'
+        fields = '__all__' # esto significa que se incluirán todos los campos del modelo en el serializer
 
 
 # =====================================================

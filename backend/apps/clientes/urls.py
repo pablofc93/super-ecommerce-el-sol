@@ -1,4 +1,5 @@
 # apps/clientes/urls.py
+#este archivo se ocupa de decidir qué vista debe recibir cada URL
 from django.urls import path
 from .views import (
     home_cliente,

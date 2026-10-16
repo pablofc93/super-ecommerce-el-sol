@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Página principal del panel administrativo (dashboard)
+    # name='admin_dashboard' es un nombre único que se puede usar para referirse a esta URL en otras partes del proyecto.
     path('', views.dashboard, name='admin_dashboard'),
 
     # Autenticación admin

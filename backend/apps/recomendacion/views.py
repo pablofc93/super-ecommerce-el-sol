@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status # permite utilizar HTTP_200_OK y HTTP_404_NOT_FOUD
 from rest_framework.permissions import AllowAny
 
 from apps.recomendacion.services.personalizadas import (
@@ -27,12 +27,12 @@ class RecomendacionPorClienteView(APIView):
 
         # 2️⃣ Obtener recomendaciones
         productos = RecomendacionPersonalizadaService.recomendar_productos_por_cliente(
-            cliente_id=id_cliente
+            cliente_id=id_cliente # es un argumento por nombre
         )
 
         # 3️⃣ Serializar respuesta
-        serializer = ProductoSerializer(productos, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = ProductoSerializer(productos, many=True) # se envían las instancias para ser procesadas por el serializer
+        return Response(serializer.data, status=status.HTTP_200_OK) # se devuelven los datos serializados como JSON
 
 
 class RecomendacionPorCategoriaFavoritaView(APIView):
@@ -51,6 +51,7 @@ class RecomendacionPorCategoriaFavoritaView(APIView):
             )
 
         # 2️⃣ Obtener recomendaciones
+        # este recomienda en base a la categoría más comprada por el cliente
         productos = RecomendacionPersonalizadaService.recomendar_por_categoria_favorita(
             cliente_id=id_cliente
         )

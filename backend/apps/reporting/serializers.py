@@ -1,3 +1,7 @@
+# Este archivo transforma los datos de Python/Django a datos que puedan
+# enviarse mediante una API, normalmente en JSON y también validar
+# los datos que llegan desde el cliente
+
 from rest_framework import serializers
 from .models import ReporteHistorico
 
@@ -9,7 +13,7 @@ class ReporteHistoricoSerializer(serializers.ModelSerializer):
     generado_por = serializers.StringRelatedField()
 
     class Meta:
-        model = ReporteHistorico
+        model = ReporteHistorico # indica que este serializer está asociado al modelo ReporteHistorico
         fields = (
             'id',
             'tipo',
@@ -45,7 +49,7 @@ class DashboardSerializer(serializers.Serializer):
 
 
 # =========================
-# NUEVO: Ingresos por cliente
+# Ingresos por cliente
 # =========================
 class IngresosPorClienteSerializer(serializers.Serializer):
     cliente = serializers.IntegerField()

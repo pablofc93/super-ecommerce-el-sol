@@ -37,24 +37,34 @@ export class RegisterComponent {
       password: ['', [Validators.required, Validators.minLength(6)]],
     });
   }
-
+  
+  /**
+   * Este método se ejecuta cuando el usuario envía el formulario
+   * con los datos de registros para almacenar el nuevo usuario
+   * del sistema 
+   */
   onSubmit() {
-
+    
+    //se comprueba si el formato del formulario es válido
     if (this.registerForm.invalid) {
-      this.registerForm.markAllAsTouched();
+      this.registerForm.markAllAsTouched(); //esto permite que la plantilla muestre los mensajes de validación
       return;
     }
 
     this.loading = true;
     this.errorMessages = [];
-
+    
+    //si el formulario es válido, se envían los datos al servicio
     this.authService.register(this.registerForm.value).subscribe({
-
+      
+      /**
+       * si el registro es exitoso se muestra un modal de Bootstrap
+       */
       next: () => {
         this.loading = false;
         this.errorMessages = [];
 
-        // 🔥 mostrar modal bonito
+        // Aquí se obtiene el modal de Bootstrap
         const modal = new bootstrap.Modal(
           document.getElementById('successModal')
         );
@@ -72,7 +82,10 @@ export class RegisterComponent {
 
   }
 
-  // =========================
+  /** 
+   * este método transforma las respuestas de error del backend en una
+   * lista de mensajes que pueden mostrarse fácilmente en la interfaz
+   */
   private formatErrors(error: any): string[] {
 
     if (!error) return ['Error desconocido'];
@@ -96,7 +109,11 @@ export class RegisterComponent {
 
     return ['Error al registrarse'];
   }
-
+  
+  /**
+   * este método convierte nombres técnicos utilizados por el backend en
+   * nombres más comprensibles para el usuario
+   */
   private humanizeField(field: string): string {
 
     const map: any = {

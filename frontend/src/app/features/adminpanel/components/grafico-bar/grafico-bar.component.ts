@@ -11,8 +11,10 @@ import { ChartConfiguration } from 'chart.js';
   templateUrl: './grafico-bar.component.html',
   styleUrls: ['./grafico-bar.component.css']
 })
+/** Este componente se encarga de mostrar un gráfico de barras */
 export class GraficoBarComponent implements OnChanges {
 
+  /**Inputs que permiten que el componente reciba datos de su componente padre */
   @Input() labels: string[] = [];
   @Input() data: number[] = [];
   @Input() titulo: string = '';
@@ -22,21 +24,29 @@ export class GraficoBarComponent implements OnChanges {
 
   @Input() separarDatasets: boolean = false;
 
-  // 🔥 OPCIONAL (por si querés forzar manualmente)
+  //OPCIONAL (por si se necesita forzar manualmente)
   @Input() mostrarLeyenda: boolean = false;
 
+  /**se crea una propiedad denominada barCharData
+   * que almacenará los datos que se mostrarán en el gráfico de barras
+   * 'bar' indica que se trata de un gráfico de barras
+   * 'data' indica que se trata de los datos del gráfico
+   * barCharDara debe tener la estructura de datos correspondiente a un gráfico de barras, 
+   * que incluye las etiquetas (labels) y los conjuntos de datos (datasets) que se mostrarán en el gráfico
+   */
   barChartData: ChartConfiguration<'bar'>['data'] = {
     labels: [],
     datasets: []
   };
 
+  /**propiedad que contiene configuración del gráfico */
   barChartOptions: ChartConfiguration<'bar'>['options'] = {
     responsive: true,
     plugins: {
-      legend: {
+      legend: { /**inicialmente la leyenda está oculta */
         display: false
       },
-      tooltip: {
+      tooltip: { /** configura las opciones que se muestran cuando el usuario pasa el mouse sobre una barra del gráfico */
         callbacks: {
           label: (context: any) => {
       

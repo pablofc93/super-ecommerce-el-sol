@@ -15,10 +15,11 @@ import { Carrito } from '../../models/carrito.model';
   styleUrls: ['./carrito.component.css'],
 })
 export class CarritoComponent implements OnInit {
+
+  /**propiedades del componente carrito */
   carrito: Carrito | null = null;
   loading = true;
   total = 0;
-
   montoPagado: number = 0;
   procesando = false;
   error: string | null = null;
@@ -30,25 +31,32 @@ export class CarritoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.carritoService.carrito$.subscribe((carrito) => {
-      this.carrito = carrito;
-      this.total = carrito ? this.carritoService.calcularTotal(carrito) : 0;
+    this.carritoService.carrito$.subscribe((carrito) => { //se sucribe al servicio carritoService para obtener el carrito actualizado
+      this.carrito = carrito; // almacena el carrito recibido en la propiedad carrito del componente
+      this.total = carrito ? this.carritoService.calcularTotal(carrito) : 0; //calcula el total del carrito utilizando el método calcularTotal del servicio carritoService
     });
-
+    
+    /*obtiene el carrito actual del usuario desde el backend y actualiza la propiedad loading a false
+     cuando se completa la operación, ya sea con éxito o con error. 
+     Esto permite que la interfaz de usuario refleje el 
+     estado de carga del carrito de manera adecuada
+    */
     this.carritoService.getCarrito().subscribe({
       next: () => (this.loading = false),
       error: () => (this.loading = false),
     });
   }
 
-  // 🔥 MÉTODO CORREGIDO (SIN DUPLICACIÓN)
+  // Eliminación de producos desde el carrito
   eliminar(itemId: number) {
-    this.carritoService.eliminarItem(itemId).subscribe({
+    this.carritoService.eliminarItem(itemId).subscribe({ // se suscribe al método eliminarItem del servicioCarritoService para eliminar un item del carrito
       next: () => {
         // ⏱ Esperar a que el backend actualice el carrito
         setTimeout(() => {
+          //se obtiene el carrito actual
           const carritoActual = this.carritoService.getCarritoActual();
-
+          
+          /**se verifica si el carrito actual es null o si no tiene productos */
           if (!carritoActual || carritoActual.items.length === 0) {
 
             // ✅ Mostrar mensaje UNA sola vez
@@ -66,18 +74,28 @@ export class CarritoComponent implements OnInit {
   }
 
   vaciar() {
+    /**limpia las variables de cualquier estado anterior */
     this.error = null;
     this.mensajeExito = null;
+    this.procesando = true; //permite deshabilitar botones y mostrar un spinner mientras se procesa la acción de vaciar el carrito
 
-    this.procesando = true;
-
-    this.carritoService.vaciarCarrito().subscribe({
+    this.carritoService.vaciarCarrito().subscribe({ //se llama al método vaciarCarrito del servicio carritoService
       next: () => {
+        /**si la operación es correcta, 
+         * se muestra un mensaje de éxito 
+         * habilita nuevamente los botones
+         * vacía el carrito, carrito.items = []
+         * actualiza el total a 0
+         * luego de 2 segundos, se obtiene nuevamente el carrito ya actualizado y se redirige al usuario a la página principal
+         * */
         this.mensajeExito =
           'Carrito vaciado correctamente, gracias por elegirnos';
 
         this.procesando = false;
-
+        
+        /**se verifica que el el carrito exista
+         * si existe, se vacía el arreglo de items del carrito
+         */
         if (this.carrito) {
           this.carrito.items = [];
         }
@@ -98,16 +116,22 @@ export class CarritoComponent implements OnInit {
       },
     });
   }
-
+  
+  /**CONFIRMAR UNA COMPRA */
   confirmar() {
     this.error = null;
     this.mensajeExito = null;
-
+    
+    /**evalúa que el monto ingresado sea suficiente */
     if (this.montoPagado < this.total) {
       this.error = 'El monto ingresado es menor al total del pedido.';
       return;
     }
-
+    
+    /**si el monto procesado es suficiente, se inicia el proceso de confirmación
+     * primero desactiva todos los botones de la interfaz de usuario
+     * y muestra el spinner de carga mientras se procesa la confirmación del pedido
+     */
     this.procesando = true;
 
     this.carritoService.confirmarPedido(this.montoPagado).subscribe({

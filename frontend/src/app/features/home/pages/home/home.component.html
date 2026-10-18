@@ -9,6 +9,7 @@
     </section>
 
     <!-- ===================================== LOADING ====================================== -->
+     <!--si loading es verdadero, se muestra este div con el mensaje "Cargando productos..."-->
     <div *ngIf="loading" class="home-loading">
       <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Cargando productos...</span>
@@ -16,6 +17,8 @@
     </div>
 
     <!-- ===================================== ERROR ====================================== -->
+     <!--si existe un mensaje de error se muestra este div
+     con el elemento-->
     <div *ngIf="error" class="alert alert-danger" role="alert">
       {{ error }}
     </div>
@@ -33,6 +36,8 @@
         <div class="carousel-track" [class.carousel-slide-right]="animacionMasVendidos === 'right'" [class.carousel-slide-left]="animacionMasVendidos === 'left'">
 
           <!-- CARD PRODUCTO MÁS VENDIDO -->
+           <!--se ejecuta el método y el resultado se almacena temporalmente en 'producto'
+           de esta manera se puede utilizar producto.imagen_url, producto.nombre, etc-->
           <article class="featured-product-card" *ngIf="obtenerProductoActualMasVendido() as producto">
 
             <!-- IMAGEN -->
@@ -86,6 +91,9 @@
     </section>
 
     <!-- ===================================== PRODUCTOS POR CATEGORÍA ====================================== -->
+     <!--categoria: representa la categoría actual 
+     categoriasVisiblesLista: es el listado de categorias
+     idx: es el índice de la categoría dentro de la lista. Ej: [0], [1], [2]...etc.-->
     <section *ngFor="let categoria of categoriasVisiblesLista; let idx = index" class="home-section">
 
       <!-- CABECERA DE CATEGORÍA -->
@@ -102,8 +110,16 @@
           <div class="row g-4">
 
             <!-- PRODUCT CARDS -->
+             <!--se obtiene el grupo de productos para la categoría actual que está recorriendo el for
+             genera una tarjeta para cada producto-->
             <div class="col-12 col-sm-6 col-lg-3" *ngFor="let producto of obtenerGrupoActualCategoria(idx)">
-              <app-product-card [producto]="producto" variant="compact" (verDetalle)="verDetalle($event)"></app-product-card>
+              <!--Se comunica el componente Home con el componente ProductCard mediante [producto]
+              y ProductCard se comunica con Home mediante (verDetalle)-->
+              <app-product-card 
+                [producto]="producto" 
+                variant="compact" 
+                (verDetalle)="verDetalle($event)">
+              </app-product-card>
             </div>
 
           </div>
@@ -122,6 +138,7 @@
     </section>
 
     <!-- ===================================== MOSTRAR MÁS CATEGORÍAS ====================================== -->
+     <!--esta sección solamente aparece si todavía existen categorías que no se están mostrando-->
     <div class="text-center" *ngIf="categoriasVisibles < categoriasConProductos.length">
       <button class="btn btn-outline-primary px-4 home-more-button" (click)="mostrarMasCategorias()">Ver más categorías</button>
     </div>
@@ -130,9 +147,13 @@
 </main>
 
 <!-- ========================================== MODAL DE AUTENTICACIÓN =========================================== -->
+ <!--al componente modal se le envía:
+ titulo, mensaje y escucha los eventos emitidos desde el
+ componente hijo, que es el
+ componente Modal-->
 <app-modal-autenticacion
   *ngIf="mostrarModalLogin"
-  titulo="Necesitás ingresar"
+  titulo="Necesitás ingresar" 
   mensaje="Para poder comprar se necesita ingresar al sistema."
   (ingresar)="irAlLogin()"
   (registrarse)="irAlRegistro()"

@@ -41,8 +41,16 @@ export class ProductosListComponent implements OnInit {
 
   ngOnInit(): void {
     // =============================== CATEGORÍAS GLOBALES ===============================
+    /*el componente se suscribe al estado actual de categorias para poder reutilizarlas*/
     this.categoriaState.categorias$.subscribe((cats) => { this.categorias = cats; });
+
     // =============================== LEER PARÁMETROS URL ===============================
+    /** se lee el parámetro de la URL
+     * Si el parámetro view es categorias, se activa la vista de categorías
+     * Si el parámetro categoría está presente, se filtran los productos por esa categoría
+     * Si no hay parámetros de categorías, se muestran todos los productos
+     * Se llama a loadProductos() para cargar los productos
+    */
     this.route.queryParams.subscribe((params) => {
       this.vistaCategorias = params['view'] === 'categories';
       if (params['categoria']) { this.categoriaSeleccionada = Number(params['categoria']); } else { this.categoriaSeleccionada = null; }
@@ -64,22 +72,28 @@ export class ProductosListComponent implements OnInit {
 
   // =============================== CARGA PRODUCTOS ===============================
   private loadProductos(): void {
-    this.loading = true;
-    this.error = null;
-    this.productosService.getProductos(this.categoriaSeleccionada ?? undefined).subscribe({
+    this.loading = true; //se activa el estado de carga
+    this.error = null; //limpia cualquier error anterior
+    this.productosService.getProductos(this.categoriaSeleccionada ?? undefined).subscribe({ //se llama al servicio para obtener los productos
+
       next: (data) => {
-        this.productos = data;
+        this.productos = data;  //se devuelven todos los productos obtenidos del backend
         // El backend ya filtra por categoría.
-        this.productosFiltrados = data;
+        this.productosFiltrados = data; //se devuelven los productos por categoria, si es que se selecciona alguna
         this.productosVisibles = this.incrementoProductos;
         if (this.vistaCategorias) { this.armarCategorias(data); }
         this.loading = false;
       },
       error: () => { this.error = 'No se pudieron cargar los productos.'; this.loading = false; }
+      
     });
   }
 
   // =============================== CAMBIO DESDE SIDEBAR ===============================
+  /**este método se ejecuta cuando el usuario selecciona una categoría en el sidebar
+   * si no se selecciona ninguna categoría, se muestran todos los productos
+   * si se selecciona una categoría, se filtran y muestran los productos de esa categoría
+   */
   filtrarCategoria(categoriaId: number | null): void {
     this.categoriaSeleccionada = categoriaId;
     if (categoriaId === null) { this.router.navigate(['/productos']); } else { this.router.navigate(['/productos'], { queryParams: { categoria: categoriaId } }); }
@@ -122,14 +136,23 @@ export class ProductosListComponent implements OnInit {
   }
 
   // =============================== ARMAR CATEGORÍAS ===============================
+  /** */
   private armarCategorias(productos: Producto[]): void {
     const mapa = new Map<string, Producto[]>();
+    
+    /*
+    recorrre la lista de productos y los agrupa por nombre de categoria
+    si un producto no tiene categoria, se agrupa bajo el nombre "Sin categoría"
+    */
     productos.forEach((producto) => {
       const nombreCategoria = producto.categoria?.nombre ?? 'Sin categoría';
       if (!mapa.has(nombreCategoria)) { mapa.set(nombreCategoria, []); }
       mapa.get(nombreCategoria)?.push(producto);
     });
+
     this.categoriasConProductos = [];
+
+    
     mapa.forEach((productosCategoria, categoria) => {
       const primerosOcho = productosCategoria.slice(0, 8);
       const grupos: Producto[][] = [];

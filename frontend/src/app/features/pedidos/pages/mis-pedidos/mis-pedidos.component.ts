@@ -26,7 +26,7 @@ export class MisPedidosComponent implements OnInit {
   cargando = true;
   error = false;
 
-  // 🔥 PAGINACIÓN
+  //PAGINACIÓN
   paginaActual = 1;
   totalRegistros = 0;
   haySiguiente = false;

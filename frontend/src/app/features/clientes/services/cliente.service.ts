@@ -3,6 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
+/*aqui se define la interfaz del cliente
+Esta interfaz representa la estructura de los datos utilizados
+por el perfil del cliente*/
 export interface ClientePerfil {
 
   username: string;
@@ -30,7 +33,12 @@ export class ClienteService {
   private apiUrl = `${environment.apiUrl}/clientes`;
 
   constructor(private http: HttpClient) {}
+  
+  /**este método se encarga de obtener los datos del perfil del cliente
+   * desde el backend
+   */
 
+  /**OBTENER EL PERFIL */
   getPerfil(): Observable<ClientePerfil> {
 
     return this.http.get<ClientePerfil>(
@@ -39,7 +47,8 @@ export class ClienteService {
     );
 
   }
-
+  
+  /**ACTUALIZAR EL PERFIL */
   updatePerfil(data: Partial<ClientePerfil>): Observable<ClientePerfil> {
 
     return this.http.patch<ClientePerfil>(

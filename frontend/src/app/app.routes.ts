@@ -19,6 +19,7 @@ export const routes: Routes = [
       { path: '', component: HomeComponent },
 
       {
+        /**cuando el usuario accede a /productos carga las rutas del módulo mediante loadchildren */
         path: 'productos',
         loadChildren: () =>
           import('./features/productos/productos.routes')

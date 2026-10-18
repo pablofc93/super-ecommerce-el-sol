@@ -37,8 +37,9 @@
 <!-- ========================= -->
 <div class="admin-wrapper">
 
-
   <!-- SIDEBAR -->
+  <!-- La clase sidebar-open se aplica cuando sidebarVisible es true. -->
+  <!-- Los eventos mouseenter y mouseleave muestran y ocultan el menú. -->
   <nav
     class="sidebar bg-dark pt-3"
     [class.sidebar-open]="sidebarVisible"
@@ -59,7 +60,6 @@
         </a>
       </li>
 
-
       <li class="nav-item">
         <a
           class="nav-link text-white"
@@ -71,7 +71,6 @@
 
         </a>
       </li>
-
 
       <li class="nav-item">
         <a
@@ -85,19 +84,17 @@
         </a>
       </li>
 
-
       <li class="nav-item">
         <a
-            class="nav-link text-white"
-            routerLink="categorias"
-            routerLinkActive="active">
+          class="nav-link text-white"
+          routerLink="categorias"
+          routerLinkActive="active">
 
-            <i class="bi bi-tags menu-icon"></i>
-            <span class="menu-text">Categorías</span>
+          <i class="bi bi-tags menu-icon"></i>
+          <span class="menu-text">Categorías</span>
 
         </a>
-    </li>
-
+      </li>
 
       <li class="nav-item">
         <a
@@ -111,7 +108,6 @@
         </a>
       </li>
 
-
       <li class="nav-item">
         <a
           class="nav-link text-white"
@@ -123,7 +119,6 @@
 
         </a>
       </li>
-
 
       <li class="nav-item mt-4">
         <a
@@ -141,8 +136,8 @@
 
   </nav>
 
-
   <!-- CONTENIDO PRINCIPAL -->
+  <!-- router-outlet carga el componente correspondiente a la ruta activa. -->
   <main class="main-content">
 
     <div class="content-container">
@@ -150,7 +145,6 @@
     </div>
 
   </main>
-
 
 </div>
 

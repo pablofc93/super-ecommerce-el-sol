@@ -18,12 +18,16 @@ import { ModalAutenticacionComponent } from '../../modal-autenticacion/modal-aut
 })
 export class ProductCardComponent {
 
+  // Recibe el producto que debe mostrar la tarjeta.
   @Input() producto!: Producto;
 
+  // Permite elegir el estilo visual de la tarjeta.
   @Input() variant: 'default' | 'compact' = 'default';
 
+  // Emite el ID del producto al componente padre.
   @Output() verDetalle = new EventEmitter<number>();
 
+  // Controla la visibilidad del modal de autenticación.
   mostrarModalLogin = false;
 
   constructor(
@@ -31,8 +35,12 @@ export class ProductCardComponent {
     private router: Router
   ) {}
 
+  /**
+   * Se ejecuta cuando se hace clic en la tarjeta.
+   * Si el usuario no está autenticado, muestra el modal.
+   * Si está autenticado, emite el ID del producto.
+   */
   onClick(): void {
-
     if (!this.authService.isLoggedIn()) {
       this.mostrarModalLogin = true;
       return;
@@ -41,17 +49,21 @@ export class ProductCardComponent {
     this.verDetalle.emit(this.producto.id);
   }
 
+  // Cierra el modal de autenticación.
   cerrarModalLogin(): void {
     this.mostrarModalLogin = false;
   }
 
+  // Cierra el modal y navega al login.
   irAlLogin(): void {
     this.mostrarModalLogin = false;
     this.router.navigate(['/auth/login']);
   }
 
+  // Cierra el modal y navega al registro.
   irAlRegistro(): void {
     this.mostrarModalLogin = false;
     this.router.navigate(['/auth/register']);
   }
+
 }

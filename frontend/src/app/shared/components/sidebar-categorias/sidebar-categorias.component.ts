@@ -108,17 +108,23 @@ import { CategoriaStateService } from '../../services/categoria-state.service';
     </aside>
   `
 })
+
 export class SidebarCategoriasComponent implements OnInit {
 
-  @Input() categorias: Categoria[] = [];
+  @Input() categorias: Categoria[] = []; /** Array de categorías. El componente padre envía una lista de categorías */
 
-  @Input() categoriaSeleccionada: number | null = null;
+  @Input() categoriaSeleccionada: number | null = null; // La categoría seleccionada actualmente. El componente padre envía el id de la categoría seleccionada o null si no hay ninguna seleccionada
 
   @Output()
-  categoriaChange = new EventEmitter<number | null>();
+  categoriaChange = new EventEmitter<number | null>(); // Evento que se emite cuando se selecciona una categoría. Se envía el id de la categoría seleccionada o null si se selecciona "Todos los productos"
 
-  openState = false;
+  openState = false; // Estado del sidebar. true = abierto, false = cerrado. Se actualiza cuando el usuario pasa el mouse por encima del sidebar o de la zona activadora
 
+  /**
+   * El constructor inyecta los servicios necesarios para el funcionamiento del componente:
+   * - SidebarService: para controlar el estado del sidebar (abierto/cerrado)
+   * - CategoriaStateService: para obtener la lista de categorías globales
+   */
   constructor(
     private sidebarService: SidebarService,
     private categoriaState: CategoriaStateService,
@@ -132,18 +138,18 @@ export class SidebarCategoriasComponent implements OnInit {
 
   }
 
+  /**este método se ejecuta durante la inicialización del componente
+   * su objetivo es comprobar si el componente recibió las categorías por input desde el padadre
+   * y, si no tiene ninguna, se las obtiene desde el servicio compartido
+   */
   ngOnInit(): void {
 
     // Si no llegan por Input, usar las categorías globales
     if (this.categorias.length === 0) {
-
       this.categoriaState.categorias$
         .subscribe(categorias => {
-
           this.categorias = categorias;
-
         });
-
     }
 
   }
@@ -160,11 +166,14 @@ export class SidebarCategoriasComponent implements OnInit {
     id: number | null
   ): void {
 
+    /** Actualiza la categoría seleccionada */
     this.categoriaSeleccionada = id;
 
+    /** Emite el evento de cambio de categoría */
     this.categoriaChange.emit(id);
 
-    // 🔥 REDIRECCIÓN A LISTADO FILTRADO
+    /*si el id es null, redirigir a todos los productos
+    sino se redirige a la página de productos con el filtro de categoría */
     if (id === null) {
       this.router.navigate(['/productos']);
     } else {

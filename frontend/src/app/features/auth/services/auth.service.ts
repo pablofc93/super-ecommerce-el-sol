@@ -10,18 +10,22 @@ import { CarritoService } from '../../pedidos/services/carrito.service';
   providedIn: 'root',
 })
 export class AuthService {
-  private userSubject = new BehaviorSubject<User | null>(null);
-  public user$ = this.userSubject.asObservable();
-  private initializedSubject = new BehaviorSubject<boolean>(false);
-  public initialized$ = this.initializedSubject.asObservable();
-  private apiUrl = `${environment.apiUrl}/auth`;
+  private userSubject = new BehaviorSubject<User | null>(null); // permite mantener al usuario autenticado
+  public user$ = this.userSubject.asObservable(); // determina cuando un usuario no está autenticado
+  private initializedSubject = new BehaviorSubject<boolean>(false); // para determinar si ya se terminó de comprobar la sesión existente
+  public initialized$ = this.initializedSubject.asObservable(); 
+  private apiUrl = `${environment.apiUrl}/auth`; // URL base para los endpoints de autenticación
 
   constructor(
     private http: HttpClient,
     private router: Router,
     private carritoService: CarritoService,
   ) {}
-
+  
+  /**
+   * este método realiza una solicitud al endpoint auth/csrf para evitar ataques del tipo
+   * CSRF
+   */
   private getCsrfToken(): Observable<any> {
     return this.http.get(`${this.apiUrl}/csrf/`, { withCredentials: true });
   }
@@ -30,9 +34,15 @@ export class AuthService {
   // REGISTER
   // =========================
   register(data: { username: string; first_name: string; last_name: string; email: string; password: string }): Observable<User> {
-    return this.getCsrfToken().pipe(
+    return this.getCsrfToken().pipe( //obtiene el token CSRF
       switchMap(() => this.http.post<User>(`${this.apiUrl}/register/`, data, { withCredentials: true })),
-      switchMap(() => this.login(data.username, data.password)),
+      
+      /* 
+      * luego de registrar al usuario, se ejecuta automáticamente 
+      * el proceso de login con el usuario 
+      * y contraseña proporcionados en el registro
+       */
+      switchMap(() => this.login(data.username, data.password)), 
     );
   }
 
@@ -40,10 +50,10 @@ export class AuthService {
   // LOGIN
   // =========================
   login(username: string, password: string): Observable<User> {
-    return this.getCsrfToken().pipe(
-      switchMap(() => this.http.post<User>(`${this.apiUrl}/login/`, { username, password }, { withCredentials: true })),
+    return this.getCsrfToken().pipe( //obtiene el token CSRF
+      switchMap(() => this.http.post<User>(`${this.apiUrl}/login/`, { username, password }, { withCredentials: true })), //envía la solicitud al back a la URL auth/login con el usuario y contraseña
       tap((user) => {
-        // Guardar usuario autenticado
+        // Cuando el backend responde correctamente, tap guardar usuario autenticado
         this.userSubject.next(user);
         // Cargar carrito automáticamente
         // para clientes
@@ -58,7 +68,7 @@ export class AuthService {
   // LOGOUT
   // =========================
   logout() {
-    return this.http.post(`${environment.apiUrl}/auth/logout/`, {}, { withCredentials: true }).pipe(
+    return this.http.post(`${environment.apiUrl}/auth/logout/`, {}, { withCredentials: true }).pipe( //se envía solicitud al back
       catchError((error) => {
         if (error.status === 403) {
           console.warn('Sesión ya inválida');
@@ -87,8 +97,8 @@ export class AuthService {
   // =========================
   getMe(): Observable<User | null> {
     return this.http.get<User>(`${this.apiUrl}/me/`, { withCredentials: true }).pipe(
-      tap((user) => {
-        this.userSubject.next(user);
+      tap((user) => { //si se obtiene el usuario del back, se ejecutan las siguientes acciones
+        this.userSubject.next(user); //almacena el usuario actual como autenticado
         // Recuperar carrito al refrescar página
         if (user.tipo_usuario === 'cliente' || user.tipo_usuario === 'usuario') {
           this.carritoService.obtenerCarrito().subscribe();
@@ -112,23 +122,30 @@ export class AuthService {
     codigo_postal?: string;
   }): Observable<User> {
     return this.getCsrfToken().pipe(
-      switchMap(() => this.http.patch<User>(`${this.apiUrl}/me/`, data, { withCredentials: true })),
-      tap((updatedUser) => this.userSubject.next(updatedUser)),
+      switchMap(() => this.http.patch<User>(`${this.apiUrl}/me/`, data, { withCredentials: true })), //solicitud patch al backend
+      tap((updatedUser) => this.userSubject.next(updatedUser)), //si Django devuelve el usuario actualizado, se almacena en updateUser
     );
   }
-
+  /**
+   * Al iniciar la aplicación consulta a Django si existe una sesión.
+   * Cuando termine esa comprobación, independientemente de si había o no una sesión,
+   * marca la autenticación como inicializada
+   */
   initializeAuth(): void {
     this.getMe().pipe(finalize(() => this.initializedSubject.next(true))).subscribe();
   }
-
+  
+  //permite comprobar si existe un usuario autenticado
   isLoggedIn(): boolean {
     return this.userSubject.value !== null;
   }
-
+  
+  //permite obtener el usuario actual
   getCurrentUser(): User | null {
     return this.userSubject.value;
   }
-
+  
+  //método que envía la solicitud al backend para el cambio de contraseña
   changePassword(data: { current_password: string; new_password: string; confirm_password: string }): Observable<any> {
     return this.getCsrfToken().pipe(
       switchMap(() => this.http.post(`${this.apiUrl}/change-password/`, data, { withCredentials: true })),

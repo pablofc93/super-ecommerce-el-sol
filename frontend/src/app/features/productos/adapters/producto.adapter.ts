@@ -1,8 +1,11 @@
+/*La responsabilidad de este archivo es transformar el objeto ProductoApi que es la respuesta del backend
+en Producto, que es la forma en que trabaja Angular, su estructura*/
 import { ProductoApi } from '../models/producto-api.model';
 import { Producto } from '../models/producto.model';
 
 export class ProductoAdapter {
-
+  
+  /** Recibe un objeto de Django y lo convierte en un nuevo objeto con la estructura utilizada por Angular */
   static fromApi(producto: ProductoApi): Producto {
 
     return {
@@ -12,7 +15,7 @@ export class ProductoAdapter {
       descripcion: producto.descripcion,
       precio: Number(producto.precio),
       stock: producto.stock,
-      imagen_url: producto.imagen_url ?? 'assets/no-image.png',
+      imagen_url: producto.imagen_url ?? 'assets/no-image.png', // ?? permite asignar una imagen alternativa cuando el valor de la imagen es null o undefined
       categoria: producto.categoria
         ? {
             id: producto.categoria.id,

@@ -16,7 +16,9 @@
           <label class="form-label">Usuario</label>
 
           <input type="text" class="form-control" [(ngModel)]="perfil.username" name="username" [readonly]="!editMode">
-
+          
+          <!--este div se utiliza para mostrar un mensaje de error
+          de validación asociado al campo Usuario-->
           <div class="text-danger mt-1" *ngIf="errors?.username">
             {{ errors.username[0] }}
           </div>
@@ -41,8 +43,7 @@
         <div class="mb-3">
           <label class="form-label">Nombre</label>
 
-          <input type="text" class="form-control" [(ngModel)]="perfil.first_name" name="first_name"
-            [readonly]="!editMode">
+          <input type="text" class="form-control" [(ngModel)]="perfil.first_name" name="first_name" [readonly]="!editMode">
 
           <div class="text-danger mt-1" *ngIf="errors?.first_name">
             {{ errors.first_name[0] }}
@@ -151,11 +152,16 @@
 
       </form>
 
+      <!--si el perfil no se encuentra en modo edición, muestra los botones de
+      Editar y Volver
+      al hacer clic en 'Editar', se llama a la función toggleEdit()-->
       <div *ngIf="!editMode">
         <button class="btn btn-primary" (click)="toggleEdit()">
           Editar
         </button>
 
+        <!--al hacer clic en 'Volver', se llama a la función
+        volver()-->
         <button class="btn btn-secondary ms-2" (click)="volver()">
           Volver
         </button>

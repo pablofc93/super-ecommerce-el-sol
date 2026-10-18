@@ -6,17 +6,23 @@ import { ProductCardComponent } from '../product-card/product-card.component';
 @Component({
   selector: 'app-product-grid',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent],
+  imports: [
+    CommonModule,
+    ProductCardComponent
+  ],
   templateUrl: './product-grid.component.html',
   styleUrls: ['./product-grid.component.css']
 })
 export class ProductGridComponent {
 
+  // Recibe del componente padre la lista de productos.
   @Input() productos: Producto[] = [];
 
+  // Emite al componente padre el ID del producto seleccionado.
   @Output() verDetalle = new EventEmitter<number>();
 
-  abrirDetalle(id: number) {
+  // Recibe el ID emitido por ProductCardComponent y lo retransmite.
+  abrirDetalle(id: number): void {
     this.verDetalle.emit(id);
   }
 

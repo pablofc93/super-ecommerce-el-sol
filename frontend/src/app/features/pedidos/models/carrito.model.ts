@@ -5,5 +5,5 @@ export interface Carrito {
   cliente: number;
   activo: boolean;
   creado_en: string;
-  items: CarritoItem[];
+  items: CarritoItem[]; // indica que un carrito puede tener múltiples items (productos) 
 }

@@ -12,11 +12,12 @@ import { AuthService } from '../../../features/auth/services/auth.service';
 })
 export class AdminpanelLayoutComponent {
 
-  sidebarVisible = false;
+  sidebarVisible = false; // Variable que controla la visibilidad del sidebar (menú lateral) en el panel de administración. Inicialmente está oculto (false).
 
+  /**en el constructor se define la inyección de dependencias */
   constructor(
-    private authService: AuthService,
-    private router: Router // 🔥 agregado
+    private authService: AuthService, //permite acceder a los métodos del servicio de autenticación, como el logout
+    private router: Router // permite redirigir al usuario a diferentes rutas de la aplicación, como el home después del logout
   ) {}
 
   logout(): void {

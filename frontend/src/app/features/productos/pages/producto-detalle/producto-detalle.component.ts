@@ -38,15 +38,20 @@ export class ProductoDetalleComponent implements OnInit {
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    //se comprueba si el id es válido
     if (!id || isNaN(id)) {
       this.error = 'Producto inválido.';
       return;
     }
 
-    // ✅ CORREGIDO (minúscula)
+    // se consulta el usuario actual para determinar si es admin
     const user = this.authService.getCurrentUser();
     this.esAdmin = user?.tipo_usuario === 'admin';
-
+    
+    /**se activa la carga, se muestra el producto y luego se desactiva la carga
+     * si no se puede cargar el producto, se muestra un mensaje de error y se
+     * desactiva la carga
+     */
     this.loading = true;
     this.productosService.getProductoById(id).subscribe({
       next: (data) => {

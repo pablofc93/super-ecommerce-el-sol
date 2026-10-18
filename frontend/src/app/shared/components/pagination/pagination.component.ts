@@ -14,35 +14,41 @@ import { CommonModule } from '@angular/common';
   templateUrl: './pagination.component.html',
 })
 export class PaginationComponent implements OnChanges {
-  @Input() paginaActual = 1;
+  @Input() paginaActual = 1; //paginaActual es una propiedad que recibe información del componente padre
 
   @Input() totalPaginas = 1;
 
   @Input() cantidadVisible = 5;
 
-  @Output() paginaChange = new EventEmitter<number>();
+  @Output() paginaChange = new EventEmitter<number>(); //paginaChange es un evento que emite un número (la página seleccionada) al componente padre
 
   paginas: number[] = [];
 
+  /**método que se ejecuta cuando cambian las propiedades del componente */
   ngOnChanges(): void {
     this.actualizarPaginas();
   }
 
+  /**este método actualiza la lista de páginas visibles
+   * si el total de páginas es menor o igual a 0, se vacía la lista de páginas
+   */
   private actualizarPaginas(): void {
     if (this.totalPaginas <= 0) {
       this.paginas = [];
       return;
     }
 
+    /**se calcula el rango de páginas visibles */
     let inicio = this.paginaActual - Math.floor(this.cantidadVisible / 2);
-
     let fin = this.paginaActual + Math.floor(this.cantidadVisible / 2);
 
+    /**el inicio nunca debe ser menor que 1 */
     if (inicio < 1) {
       inicio = 1;
       fin = Math.min(this.cantidadVisible, this.totalPaginas);
     }
 
+    /**el final nunca debe ser mayor que el total de páginas */
     if (fin > this.totalPaginas) {
       fin = this.totalPaginas;
       inicio = Math.max(1, fin - this.cantidadVisible + 1);

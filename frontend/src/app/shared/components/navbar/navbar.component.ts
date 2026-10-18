@@ -62,19 +62,23 @@ export class NavbarComponent implements OnInit {
   // ESTADOS DEL MENU
   // ============================
 
+  /*getter que controla si un usuario está conectado o no*/
   get isLoggedIn(): boolean {
     return this.currentUser !== null;
   }
 
+  /**getter que controla si un usuario es administrador */
   get isAdmin(): boolean {
     return this.currentUser?.tipo_usuario === 'admin';
   }
 
+  /**getter que controla si es un usuario o un cliente */
   get isCliente(): boolean {
     return this.currentUser?.tipo_usuario === 'cliente'
       || this.currentUser?.tipo_usuario === 'usuario';
   }
 
+  /**getter que controla si la vista actual es la de categorías */
   get esVistaCategorias(): boolean {
     const url = this.router.parseUrl(this.router.url);
     const segmentos = url.root.children['primary']?.segments ?? [];
@@ -85,6 +89,7 @@ export class NavbarComponent implements OnInit {
     );
   }
 
+  /**getter que controla si la vista actual es la de productos */
   get esVistaProductos(): boolean {
     return this.router.url.startsWith('/productos') && !this.esVistaCategorias;
   }

@@ -5,13 +5,13 @@ import { AuthGuard } from '../auth/guards/auth.guard';
 
 export const productosRoutes: Routes = [
   {
-    path: '',
+    path: '', // ruta principal del módulo de productos, en este caso muestra la lista de productos
     component: ProductosListComponent
   },
 
   {
-    path: ':id',
+    path: ':id', // :id representa un parámetro dinámico de la url ej: /productos/15
     component: ProductoDetalleComponent,
-    canActivate: [AuthGuard] // 🔥 PROTECCIÓN
+    canActivate: [AuthGuard] // para acceder a este componente el usuario debe estar logueado(autenticado)
   }
 ];

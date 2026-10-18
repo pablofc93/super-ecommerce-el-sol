@@ -1,4 +1,5 @@
+
 export const environment = {
   production: true,
-  apiUrl: 'https://TU_DOMINIO/api'
+  apiUrl: 'https://super-ecommerce-el-sol.onrender.com/api'
 };

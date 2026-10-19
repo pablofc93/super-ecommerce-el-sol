@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpParams,
+} from '@angular/common/http';
+
 import { Observable, switchMap } from 'rxjs';
+
 import { environment } from '../../../../environments/environment';
 import { UsuarioAdmin } from '../models/usuario-admin.model';
 
@@ -11,26 +17,62 @@ export interface UsuariosResponse {
   results: UsuarioAdmin[];
 }
 
+interface CsrfResponse {
+  csrfToken: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AdminUsuariosService {
-
   private apiUrl = `${environment.apiUrl}/auth/admin`;
 
   constructor(private http: HttpClient) {}
 
-  private getCsrfToken(): Observable<any> {
-    return this.http.get(
-      `${environment.apiUrl}/auth/csrf/`,
-      { withCredentials: true }
-    );
+  /**
+   * Obtiene un token CSRF válido desde Django.
+   * El endpoint también establece la cookie CSRF.
+   */
+  private obtenerCsrfToken(): Observable<string> {
+    return this.http
+      .get<CsrfResponse>(
+        `${environment.apiUrl}/csrf/`,
+        { withCredentials: true }
+      )
+      .pipe(
+        switchMap((respuesta) => {
+          if (!respuesta?.csrfToken) {
+            throw new Error(
+              'Django no devolvió el token CSRF esperado.'
+            );
+          }
+
+          // Emitimos el token para utilizarlo en la petición siguiente.
+          return new Observable<string>((subscriber) => {
+            subscriber.next(respuesta.csrfToken);
+            subscriber.complete();
+          });
+        })
+      );
   }
 
-  listarUsuarios(page: number = 1, search: string = ''): Observable<UsuariosResponse> {
+  /**
+   * Construye los encabezados necesarios para Django.
+   */
+  private crearHeadersCsrf(token: string): HttpHeaders {
+    return new HttpHeaders({
+      'X-CSRFToken': token,
+    });
+  }
 
-    let params = new HttpParams()
-      .set('page', page);
+  /**
+   * Lista los usuarios registrados.
+   */
+  listarUsuarios(
+    page: number = 1,
+    search: string = ''
+  ): Observable<UsuariosResponse> {
+    let params = new HttpParams().set('page', page);
 
     if (search) {
       params = params.set('search', search);
@@ -38,45 +80,69 @@ export class AdminUsuariosService {
 
     return this.http.get<UsuariosResponse>(
       `${this.apiUrl}/listar/`,
-      { params, withCredentials: true }
+      {
+        params,
+        withCredentials: true,
+      }
     );
   }
 
+  /**
+   * Crea un usuario desde el panel administrativo.
+   */
   crearUsuario(data: {
     username: string;
     email: string;
     password: string;
     tipo_usuario: 'admin' | 'cliente';
   }): Observable<UsuarioAdmin> {
-    return this.getCsrfToken().pipe(
-      switchMap(() =>
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
         this.http.post<UsuarioAdmin>(
           `${this.apiUrl}/crear/`,
           data,
-          { withCredentials: true }
+          {
+            headers: this.crearHeadersCsrf(token),
+            withCredentials: true,
+          }
         )
       )
     );
   }
 
-  cambiarRol(userId: number, tipo_usuario: 'admin' | 'cliente'): Observable<any> {
-    return this.getCsrfToken().pipe(
-      switchMap(() =>
+  /**
+   * Cambia el rol de un usuario.
+   */
+  cambiarRol(
+    userId: number,
+    tipo_usuario: 'admin' | 'cliente'
+  ): Observable<any> {
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
         this.http.patch(
           `${this.apiUrl}/${userId}/rol/`,
           { tipo_usuario },
-          { withCredentials: true }
+          {
+            headers: this.crearHeadersCsrf(token),
+            withCredentials: true,
+          }
         )
       )
     );
   }
 
+  /**
+   * Elimina un usuario.
+   */
   eliminarUsuario(userId: number): Observable<any> {
-    return this.getCsrfToken().pipe(
-      switchMap(() =>
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
         this.http.delete(
           `${this.apiUrl}/${userId}/eliminar/`,
-          { withCredentials: true }
+          {
+            headers: this.crearHeadersCsrf(token),
+            withCredentials: true,
+          }
         )
       )
     );

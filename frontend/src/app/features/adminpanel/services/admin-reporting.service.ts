@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
@@ -9,10 +9,28 @@ import { environment } from '../../../../environments/environment';
 })
 export class AdminReportingService {
 
-  // ✅ usar backend correcto
   private baseUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
+
+  // =========================
+  // TOKEN CSRF
+  // =========================
+
+  /**
+   * Obtiene un token CSRF desde Django.
+   * El endpoint debe devolver { csrfToken: string }.
+   */
+  private obtenerTokenCsrf(): Observable<string> {
+    return this.http
+      .get<{ csrfToken: string }>(
+        `${this.baseUrl}/csrf/`,
+        { withCredentials: true }
+      )
+      .pipe(
+        map((respuesta) => respuesta.csrfToken)
+      );
+  }
 
   // =========================
   // PRODUCTOS
@@ -21,19 +39,17 @@ export class AdminReportingService {
   getProductosMasVendidos(
     page: number = 1
   ): Observable<any> {
-
     return this.http.get<any>(
-      `${this.baseUrl}/analitica/productos-mas-vendidos/?page=${page}`
+      `${this.baseUrl}/analitica/productos-mas-vendidos/?page=${page}`,
+      { withCredentials: true }
     );
-
   }
 
   getProductosMasVendidosAgrupados(
     fechaInicio?: string,
     fechaFin?: string,
   ): Observable<any[]> {
-
-    let params: any = {};
+    const params: any = {};
 
     if (fechaInicio) {
       params.fecha_inicio = fechaInicio;
@@ -45,17 +61,18 @@ export class AdminReportingService {
 
     return this.http.get<any[]>(
       `${this.baseUrl}/analitica/productos-mas-vendidos-agrupados/`,
-      { params }
+      {
+        params,
+        withCredentials: true
+      }
     );
-
   }
 
   getCategoriasMasMovidas(): Observable<any[]> {
-
     return this.http.get<any[]>(
-      `${this.baseUrl}/analitica/categorias-mas-movidas/`
+      `${this.baseUrl}/analitica/categorias-mas-movidas/`,
+      { withCredentials: true }
     );
-
   }
 
   // =========================
@@ -65,19 +82,17 @@ export class AdminReportingService {
   getIngresosPorCliente(
     page: number = 1
   ): Observable<any> {
-
     return this.http.get<any>(
-      `${this.baseUrl}/reporting/ingresos-clientes/?page=${page}`
+      `${this.baseUrl}/reporting/ingresos-clientes/?page=${page}`,
+      { withCredentials: true }
     );
-
   }
 
   getClientesSegmentados(): Observable<any[]> {
-
     return this.http.get<any[]>(
-      `${this.baseUrl}/analitica/clientes-segmentados/`
+      `${this.baseUrl}/analitica/clientes-segmentados/`,
+      { withCredentials: true }
     );
-
   }
 
   // =========================
@@ -87,11 +102,10 @@ export class AdminReportingService {
   getReglasAsociacion(
     page: number = 1
   ): Observable<any> {
-
     return this.http.get<any>(
-      `${this.baseUrl}/analitica/reglas-asociacion/?page=${page}`
+      `${this.baseUrl}/analitica/reglas-asociacion/?page=${page}`,
+      { withCredentials: true }
     );
-
   }
 
   // =========================
@@ -101,11 +115,10 @@ export class AdminReportingService {
   getReportesHistoricos(
     page: number = 1
   ): Observable<any> {
-
     return this.http.get<any>(
-      `${this.baseUrl}/reporting/historicos/?page=${page}`
+      `${this.baseUrl}/reporting/historicos/?page=${page}`,
+      { withCredentials: true }
     );
-
   }
 
   // =========================
@@ -113,12 +126,19 @@ export class AdminReportingService {
   // =========================
 
   registrarAcceso(tipo: string): Observable<any> {
-
-    return this.http.post(
-      `${this.baseUrl}/reporting/registrar-acceso/`,
-      { tipo }
+    return this.obtenerTokenCsrf().pipe(
+      switchMap((csrfToken) =>
+        this.http.post(
+          `${this.baseUrl}/reporting/registrar-acceso/`,
+          { tipo },
+          {
+            withCredentials: true,
+            headers: new HttpHeaders({
+              'X-CSRFToken': csrfToken
+            })
+          }
+        )
+      )
     );
-
   }
-
 }

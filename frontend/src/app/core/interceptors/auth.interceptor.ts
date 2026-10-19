@@ -1,8 +1,9 @@
 /*
-Este código es un Interceptor HTTP de Angular
-Su función principal es modificar las peticiones que salen desde Angular
-hacia Django y, además, reaccionar cuando Django responde con errores 401 o 403
-*/
+ * Interceptor HTTP de Angular.
+ * Envía cookies, agrega CSRF cuando corresponde
+ * y gestiona errores de autenticación.
+ */
+
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -19,17 +20,27 @@ function getCookie(name: string): string | null {
 
   return null;
 }
-//req es una funcion de Angular que se está por enviar, next es una funcion que permite continuar con la peticion
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const csrfToken = getCookie('csrftoken');
+
+  // Enviar cookies de sesión.
   let modifiedReq = req.clone({
-    // ✅ enviar cookies SIEMPRE
     withCredentials: true
   });
 
-  // 🔐 Agregar CSRF si existe
-  if (csrfToken) {
+  /*
+   * Agregar el token disponible solo si la petición
+   * todavía no tiene uno explícito.
+   *
+   * Esto evita sobrescribir el token obtenido desde
+   * el endpoint CSRF de Django.
+   */
+  if (
+    csrfToken &&
+    !modifiedReq.headers.has('X-CSRFToken')
+  ) {
     modifiedReq = modifiedReq.clone({
       setHeaders: {
         'X-CSRFToken': csrfToken
@@ -38,14 +49,26 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   return next(modifiedReq).pipe(
-
     catchError((error) => {
-      // 🔥 CLAVE: manejar sesión inválida
-      if (error.status === 401 || error.status === 403) {
-        console.warn('Sesión expirada o inválida');
-        // limpiar estado frontend
+      const detail = error?.error?.detail;
+
+      // Un error CSRF no implica necesariamente
+      // que la sesión del usuario haya expirado.
+      const isCsrfError =
+        typeof detail === 'string' &&
+        detail.toLowerCase().includes('csrf');
+
+      if (
+        (error.status === 401 || error.status === 403) &&
+        !isCsrfError
+      ) {
+        console.warn(
+          'Error de autenticación o permisos:',
+          error.status
+        );
+
         localStorage.clear();
-        // evitar loops infinitos
+
         if (!router.url.includes('/login')) {
           router.navigate(['/login']);
         }
@@ -53,6 +76,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
       return throwError(() => error);
     })
-
   );
 };

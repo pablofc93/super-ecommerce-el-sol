@@ -6,7 +6,16 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.views.static import serve
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import ensure_csrf_cookie
 
+
+@ensure_csrf_cookie
+def obtener_csrf_token(request):
+    return JsonResponse({
+        "csrfToken": get_token(request)
+    })
 
 urlpatterns = [
     # =========================
@@ -18,7 +27,7 @@ urlpatterns = [
     # AUTH / USUARIOS
     # =========================
     path('api/auth/', include('apps.usuarios.urls')), # ese endpoint maneja las solicitudes de login, logout y registro de usuarios. Recibe la solicitud y la dirige a las urls de la app de usuarios 
-
+    path('api/csrf/', obtener_csrf_token),
     # =========================
     # ECOMMERCE
     # =========================

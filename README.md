@@ -671,7 +671,7 @@ Contraseña: 123456
 ### Cliente
 
 ```text
-Usuario: cliente000001
+Usuario: cliente000002
 Contraseña: 123456
 ```
 Nota: todos los clientes creados/cargados tienen la misma contraseña (cliente000002, cliente000003, cliente000123, etc).

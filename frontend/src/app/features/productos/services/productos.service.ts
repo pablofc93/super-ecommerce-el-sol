@@ -1,99 +1,141 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, expand, map, reduce } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import {
+  Observable,
+  expand,
+  map,
+  reduce,
+  switchMap,
+} from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { ProductoApi } from '../models/producto-api.model';
 import { Producto } from '../models/producto.model';
 import { ProductoAdapter } from '../adapters/producto.adapter';
 
+interface CsrfResponse {
+  csrfToken: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class ProductosService {
-  
-  // el servicio utiliza 2 URLs principales: una para productos y otra para analítica
+
+  // URL principal para las operaciones de productos.
   private apiUrl = `${environment.apiUrl}/productos/productos/`;
+
+  // URL para las consultas de analítica.
   private analiticaUrl = `${environment.apiUrl}/analitica/`;
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Obtiene los productos.
-   * Si se envía una categoría, el filtrado se realiza
-   * directamente en el backend.
+   * Obtiene un token CSRF desde Django.
+   * Se envían las cookies para mantener la sesión.
+   */
+  private obtenerCsrfToken(): Observable<string> {
+    return this.http
+      .get<CsrfResponse>(
+        `${environment.apiUrl}/csrf/`,
+        { withCredentials: true }
+      )
+      .pipe(
+        map((respuesta) => {
+          if (!respuesta?.csrfToken) {
+            throw new Error(
+              'El backend no devolvió el token CSRF.'
+            );
+          }
+
+          return respuesta.csrfToken;
+        })
+      );
+  }
+
+  /**
+   * Crea un producto y envía los datos mediante FormData.
+   * Permite incluir la imagen sin establecer manualmente
+   * el encabezado Content-Type.
+   */
+  crearProducto(datos: FormData): Observable<any> {
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
+        this.http.post(
+          this.apiUrl,
+          datos,
+          {
+            headers: new HttpHeaders({
+              'X-CSRFToken': token,
+            }),
+            withCredentials: true,
+          }
+        )
+      )
+    );
+  }
+
+  /**
+   * Obtiene los productos, con filtrado opcional por categoría
+   * y soporte para paginación.
    */
   getProductos(categoria?: number): Observable<Producto[]> {
-    
-    // se inicializa la url
+
     let url = this.apiUrl;
-    
-    //se comprueba si se proporciona o no la categoría
+
     if (categoria !== undefined && categoria !== null) {
-      url += `?categoria=${categoria}`; //se agrega la categoría como parámetro de consulta, el backend lo usa para filtrar los productos
+      url += `?categoria=${categoria}`;
     }
 
-    return this.http.get<any>(url).pipe( //se realiza la petición HTTP
-      
-      // permite manejar la paginación de los resultados, 
-      // si el backend devuelve una propiedad "next" 
-      // con la URL de la siguiente página, se hace una 
-      // petición HTTP a esa URL y se repite el proceso 
-      // hasta que no haya más páginas
-      expand(response =>
+    return this.http.get<any>(url, {
+      withCredentials: true,
+    }).pipe(
+      expand((response) =>
         response.next
-          ? this.http.get<any>(response.next)
+          ? this.http.get<any>(response.next, {
+              withCredentials: true,
+            })
           : []
       ),
-      
-      // acumula los productos en un único array,
-      // combinando los productos de todas las páginas
+
       reduce((acumulado, response) => {
         const productosPagina = response.results ?? response;
+
         return [...acumulado, ...productosPagina];
       }, [] as ProductoApi[]),
-      
-      // aquí se transforma la lista de productos del backend 
-      // (ProductoApi) a la estructura utilizada por Angular (Producto)
-      map(productos =>
+
+      map((productos) =>
         ProductoAdapter.fromApiList(productos)
       )
-
     );
-
   }
 
   /**
-   * Obtiene un único producto por ID
-   * la respuesta se recibe como ProductoApi y se transforma a 
-   * Producto usando ProductoAdapter
+   * Obtiene un producto por su ID.
    */
   getProductoById(id: number): Observable<Producto> {
-
     return this.http
-      .get<ProductoApi>(`${this.apiUrl}${id}/`)
+      .get<ProductoApi>(`${this.apiUrl}${id}/`, {
+        withCredentials: true,
+      })
       .pipe(
-        map(prod => ProductoAdapter.fromApi(prod))
+        map((prod) => ProductoAdapter.fromApi(prod))
       );
-
   }
 
   /**
-   * Obtiene los productos más vendidos para mostrar
-   * en la pantalla de inicio del cliente.
-   * la respuesta se recibe como ProductoApi[] y se transforma a 
-   *  Producto[] usando ProductoAdapter
+   * Obtiene los productos más vendidos.
    */
   getProductosMasVendidos(): Observable<Producto[]> {
-
     return this.http
       .get<ProductoApi[]>(
-        `${this.analiticaUrl}productos-mas-vendidos-public/`
+        `${this.analiticaUrl}productos-mas-vendidos-public/`,
+        { withCredentials: true }
       )
       .pipe(
-        map(productos => ProductoAdapter.fromApiList(productos))
+        map((productos) =>
+          ProductoAdapter.fromApiList(productos)
+        )
       );
-
   }
-
 }

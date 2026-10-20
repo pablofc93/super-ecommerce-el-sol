@@ -1,16 +1,20 @@
+
 import { HttpInterceptorFn } from '@angular/common/http';
 
-export const credentialsInterceptor: HttpInterceptorFn = (req, next) => {
+import { environment } from '../../../environments/environment';
 
-  // Solo enviar credenciales a endpoints que lo requieren
-  if (
-    req.url.includes('/api/auth/') ||
-    req.url.includes('/api/pedidos/')
-  ) {
-    const clonedRequest = req.clone({
-      withCredentials: true
-    });
-    return next(clonedRequest);
+export const credentialsInterceptor: HttpInterceptorFn = (
+  req,
+  next
+) => {
+  // Envía las cookies al backend cuando la solicitud
+  // se dirige a la API configurada.
+  if (req.url.startsWith(environment.apiUrl)) {
+    return next(
+      req.clone({
+        withCredentials: true,
+      })
+    );
   }
 
   return next(req);

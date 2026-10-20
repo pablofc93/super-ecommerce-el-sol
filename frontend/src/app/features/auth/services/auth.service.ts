@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, tap, catchError, of, switchMap, finalize } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, BehaviorSubject, tap, catchError, of, switchMap, finalize, map } from 'rxjs';
 import { Router } from '@angular/router';
 import { User } from '../models/user.model';
 import { environment } from '../../../../environments/environment';
@@ -10,6 +10,7 @@ import { CarritoService } from '../../pedidos/services/carrito.service';
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly csrfUrl = `${environment.apiUrl}/csrf/`;
   private userSubject = new BehaviorSubject<User | null>(null); // permite mantener al usuario autenticado
   public user$ = this.userSubject.asObservable(); // determina cuando un usuario no está autenticado
   private initializedSubject = new BehaviorSubject<boolean>(false); // para determinar si ya se terminó de comprobar la sesión existente
@@ -23,19 +24,29 @@ export class AuthService {
   ) {}
   
   /**
-   * este método realiza una solicitud al endpoint auth/csrf para evitar ataques del tipo
-   * CSRF
+   * Solicita un token CSRF para las solicitudes que modifican datos.
    */
-  private getCsrfToken(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/csrf/`, { withCredentials: true });
+  private getCsrfToken(): Observable<string> {
+    return this.http
+      .get<{ csrfToken: string }>(this.csrfUrl, { withCredentials: true })
+      .pipe(map(({ csrfToken }) => csrfToken));
+  }
+
+  private csrfHeaders(token: string): HttpHeaders {
+    return new HttpHeaders({ 'X-CSRFToken': token });
   }
 
   // =========================
   // REGISTER
   // =========================
   register(data: { username: string; first_name: string; last_name: string; email: string; password: string }): Observable<User> {
-    return this.getCsrfToken().pipe( //obtiene el token CSRF
-      switchMap(() => this.http.post<User>(`${this.apiUrl}/register/`, data, { withCredentials: true })),
+    return this.getCsrfToken().pipe(
+      switchMap((token) =>
+        this.http.post<User>(`${this.apiUrl}/register/`, data, {
+          headers: this.csrfHeaders(token),
+          withCredentials: true,
+        })
+      ),
       
       /* 
       * luego de registrar al usuario, se ejecuta automáticamente 
@@ -50,8 +61,17 @@ export class AuthService {
   // LOGIN
   // =========================
   login(username: string, password: string): Observable<User> {
-    return this.getCsrfToken().pipe( //obtiene el token CSRF
-      switchMap(() => this.http.post<User>(`${this.apiUrl}/login/`, { username, password }, { withCredentials: true })), //envía la solicitud al back a la URL auth/login con el usuario y contraseña
+    return this.getCsrfToken().pipe(
+      switchMap((token) =>
+        this.http.post<User>(
+          `${this.apiUrl}/login/`,
+          { username, password },
+          {
+            headers: this.csrfHeaders(token),
+            withCredentials: true,
+          }
+        )
+      ),
       tap((user) => {
         // Cuando el backend responde correctamente, tap guardar usuario autenticado
         this.userSubject.next(user);
@@ -122,7 +142,12 @@ export class AuthService {
     codigo_postal?: string;
   }): Observable<User> {
     return this.getCsrfToken().pipe(
-      switchMap(() => this.http.patch<User>(`${this.apiUrl}/me/`, data, { withCredentials: true })), //solicitud patch al backend
+      switchMap((token) =>
+        this.http.patch<User>(`${this.apiUrl}/me/`, data, {
+          headers: this.csrfHeaders(token),
+          withCredentials: true,
+        })
+      ),
       tap((updatedUser) => this.userSubject.next(updatedUser)), //si Django devuelve el usuario actualizado, se almacena en updateUser
     );
   }
@@ -148,7 +173,12 @@ export class AuthService {
   //método que envía la solicitud al backend para el cambio de contraseña
   changePassword(data: { current_password: string; new_password: string; confirm_password: string }): Observable<any> {
     return this.getCsrfToken().pipe(
-      switchMap(() => this.http.post(`${this.apiUrl}/change-password/`, data, { withCredentials: true })),
+      switchMap((token) =>
+        this.http.post(`${this.apiUrl}/change-password/`, data, {
+          headers: this.csrfHeaders(token),
+          withCredentials: true,
+        })
+      ),
     );
   }
 }

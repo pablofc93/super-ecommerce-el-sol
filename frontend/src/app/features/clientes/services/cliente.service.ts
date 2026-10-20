@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 /*aqui se define la interfaz del cliente
@@ -25,6 +25,10 @@ export interface ClientePerfil {
 
 }
 
+interface CsrfResponse {
+  csrfToken: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +37,22 @@ export class ClienteService {
   private apiUrl = `${environment.apiUrl}/clientes`;
 
   constructor(private http: HttpClient) {}
+
+  private obtenerCsrfToken(): Observable<string> {
+    return this.http
+      .get<CsrfResponse>(`${environment.apiUrl}/csrf/`, {
+        withCredentials: true
+      })
+      .pipe(
+        map(({ csrfToken }) => {
+          if (!csrfToken) {
+            throw new Error('El backend no devolvió el token CSRF.');
+          }
+
+          return csrfToken;
+        })
+      );
+  }
   
   /**este método se encarga de obtener los datos del perfil del cliente
    * desde el backend
@@ -50,12 +70,17 @@ export class ClienteService {
   
   /**ACTUALIZAR EL PERFIL */
   updatePerfil(data: Partial<ClientePerfil>): Observable<ClientePerfil> {
-
-    return this.http.patch<ClientePerfil>(
-      `${this.apiUrl}/me/`,
-      data,
-      { withCredentials: true }
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
+        this.http.patch<ClientePerfil>(
+          `${this.apiUrl}/me/`,
+          data,
+          {
+            headers: new HttpHeaders({ 'X-CSRFToken': token }),
+            withCredentials: true
+          }
+        )
+      )
     );
-
   }
 }

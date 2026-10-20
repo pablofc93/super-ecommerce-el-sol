@@ -1,12 +1,16 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map, switchMap } from 'rxjs';
 
 import { PedidoAdmin } from '../models/pedido-admin.model';
 import { PedidoEstado } from '../../../shared/enums/pedido-estado.enum';
 import { PedidoDetalle } from '../../../shared/models/pedido-detalle.model';
 
 import { environment } from '../../../../environments/environment';
+
+interface CsrfResponse {
+  csrfToken: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -15,6 +19,22 @@ export class AdminPedidosService {
   private http = inject(HttpClient);
 
   private apiUrl = `${environment.apiUrl}/pedidos`;
+
+  private obtenerCsrfToken(): Observable<string> {
+    return this.http
+      .get<CsrfResponse>(`${environment.apiUrl}/csrf/`, {
+        withCredentials: true
+      })
+      .pipe(
+        map(({ csrfToken }) => {
+          if (!csrfToken) {
+            throw new Error('El backend no devolvió el token CSRF.');
+          }
+
+          return csrfToken;
+        })
+      );
+  }
 
   listarPedidos(
     page: number = 1,
@@ -28,9 +48,18 @@ export class AdminPedidosService {
   }
 
   cambiarEstado(pedidoId: number, estado: PedidoEstado): Observable<any> {
-    return this.http.patch(`${this.apiUrl}/admin/${pedidoId}/estado/`, {
-      estado,
-    });
+    return this.obtenerCsrfToken().pipe(
+      switchMap((token) =>
+        this.http.patch(
+          `${this.apiUrl}/admin/${pedidoId}/estado/`,
+          { estado },
+          {
+            headers: new HttpHeaders({ 'X-CSRFToken': token }),
+            withCredentials: true,
+          }
+        )
+      )
+    );
   }
 
   detallePedido(pedidoId: number): Observable<PedidoDetalle> {

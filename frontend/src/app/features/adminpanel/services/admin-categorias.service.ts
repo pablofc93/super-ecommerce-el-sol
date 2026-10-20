@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, switchMap } from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, map, switchMap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { CategoriaAdmin } from '../models/categoria-admin.model';
 
@@ -9,6 +9,10 @@ export interface CategoriasResponse {
   next: string | null;
   previous: string | null;
   results: CategoriaAdmin[];
+}
+
+interface CsrfResponse {
+  csrfToken: string;
 }
 
 @Injectable({
@@ -20,13 +24,24 @@ export class AdminCategoriasService {
 
   constructor(private http: HttpClient) {}
 
-  private getCsrfToken(): Observable<any> {
-    return this.http.get(
-      `${environment.apiUrl}/auth/csrf/`,
-      {
+  private getCsrfToken(): Observable<string> {
+    return this.http
+      .get<CsrfResponse>(`${environment.apiUrl}/csrf/`, {
         withCredentials: true
-      }
-    );
+      })
+      .pipe(
+        map(({ csrfToken }) => {
+          if (!csrfToken) {
+            throw new Error('El backend no devolvió el token CSRF.');
+          }
+
+          return csrfToken;
+        })
+      );
+  }
+
+  private csrfHeaders(token: string): HttpHeaders {
+    return new HttpHeaders({ 'X-CSRFToken': token });
   }
 
   listarCategorias(
@@ -56,11 +71,12 @@ export class AdminCategoriasService {
   }): Observable<CategoriaAdmin> {
 
     return this.getCsrfToken().pipe(
-      switchMap(() =>
+      switchMap((token) =>
         this.http.post<CategoriaAdmin>(
           `${this.apiUrl}/`,
           data,
           {
+            headers: this.csrfHeaders(token),
             withCredentials: true
           }
         )
@@ -75,11 +91,12 @@ export class AdminCategoriasService {
   ): Observable<CategoriaAdmin> {
 
     return this.getCsrfToken().pipe(
-      switchMap(() =>
+      switchMap((token) =>
         this.http.put<CategoriaAdmin>(
           `${this.apiUrl}/${id}/`,
           data,
           {
+            headers: this.csrfHeaders(token),
             withCredentials: true
           }
         )
@@ -91,10 +108,11 @@ export class AdminCategoriasService {
   eliminarCategoria(id: number): Observable<any> {
 
     return this.getCsrfToken().pipe(
-      switchMap(() =>
+      switchMap((token) =>
         this.http.delete(
           `${this.apiUrl}/${id}/`,
           {
+            headers: this.csrfHeaders(token),
             withCredentials: true
           }
         )

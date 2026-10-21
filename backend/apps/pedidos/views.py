@@ -222,40 +222,97 @@ class CancelarPedidoView(APIView):
         pedido.save()
         return Response({"mensaje": "Pedido cancelado correctamente"})
 
+
+
 # =========================================================
-# ADMIN - LISTAR PEDIDOS (CON PAGINACIÓN)
+# ADMIN - LISTAR PEDIDOS CON BÚSQUEDA Y PAGINACIÓN
 # =========================================================
 class AdminListarPedidosView(APIView):
+
     permission_classes = [IsAdminUser]
+
     def get(self, request):
-        #querey_params permite acceder a los parámetros de consulta de la URL, como ?search=valor.
-        #.get() permite obtener el valor de un parámetro específico, en este caso "search".
-        # si no lo encuentra, devuelve una cadena vacía. .strip() elimina espacios en blanco al inicio y al final del valor obtenido.
+        # Obtener y normalizar el texto de búsqueda.
         search = request.query_params.get("search", "").strip()
+
+        # Obtener los pedidos y cargar sus relaciones.
         pedidos = Pedido.objects.select_related(
-            "cliente", #seleccionar el cliente relacionado con el pedido
-            "cliente__id_cliente" #esto permite acceder a pedidos->cliente->id_cliente, que es el usuario relacionado con el cliente
+            "cliente",
+            "cliente__id_cliente"
         )
-        if search: #si search contiene un valor, se ejecuta el codigo dentro del if
-            pedidos = pedidos.filter(
-                #la Q significa que se pueden combinar múltiples condiciones de búsqueda usando operadores lógicos (AND, OR).
-                #busca pedidos por nombre de usuario o nombre o apellido
-                Q(cliente__id_cliente__username__icontains=search) |
-                Q(cliente__id_cliente__first_name__icontains=search) |
-                Q(cliente__id_cliente__last_name__icontains=search)
-            )
-            #esta comprobación es para buscarpor el id del pedido si el valor de búsqueda es un número.
-            if search.isdigit():
-                pedidos = pedidos | Pedido.objects.filter(
-                    id_pedido=int(search)
+
+        if search:
+            # -------------------------------------------------
+            # 1. PRIORIDAD: COINCIDENCIA EXACTA DE USUARIO
+            # -------------------------------------------------
+            cliente_exacto = Cliente.objects.filter(
+                id_cliente__username__iexact=search
+            ).first()
+
+            if cliente_exacto:
+                # Si el usuario existe exactamente, mostrar
+                # solamente sus pedidos.
+                pedidos = pedidos.filter(
+                    cliente=cliente_exacto
                 )
-        pedidos = pedidos.order_by("-fecha").distinct()
+
+            else:
+                # -------------------------------------------------
+                # 2. COINCIDENCIA EXACTA POR NOMBRE O APELLIDO
+                # -------------------------------------------------
+                clientes_exactos = Cliente.objects.filter(
+                    Q(id_cliente__first_name__iexact=search)
+                    | Q(id_cliente__last_name__iexact=search)
+                )
+
+                if clientes_exactos.exists():
+                    pedidos = pedidos.filter(
+                        cliente__in=clientes_exactos
+                    )
+
+                else:
+                    # -------------------------------------------------
+                    # 3. BÚSQUEDA PARCIAL
+                    # -------------------------------------------------
+                    pedidos = pedidos.filter(
+                        Q(
+                            cliente__id_cliente__username__icontains=search
+                        )
+                        | Q(
+                            cliente__id_cliente__first_name__icontains=search
+                        )
+                        | Q(
+                            cliente__id_cliente__last_name__icontains=search
+                        )
+                    )
+
+        # Ordenar del pedido más reciente al más antiguo.
+        pedidos = pedidos.order_by(
+            "-fecha",
+            "-id_pedido"
+        ).distinct()
+
+        # Aplicar paginación.
         paginator = PageNumberPagination()
         paginator.page_size = 5
-        result_page = paginator.paginate_queryset(pedidos, request)
+
+        result_page = paginator.paginate_queryset(
+            pedidos,
+            request
+        )
+
         from .serializers import PedidoAdminSerializer
-        serializer = PedidoAdminSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+
+        serializer = PedidoAdminSerializer(
+            result_page,
+            many=True
+        )
+
+        return paginator.get_paginated_response(
+            serializer.data
+        )
+
+
 
 # =========================================================
 # ADMIN - CAMBIAR ESTADO

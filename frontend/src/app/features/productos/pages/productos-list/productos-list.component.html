@@ -15,6 +15,31 @@
     </div>
   </header>
 
+  <section class="catalogo-recomendaciones" *ngIf="esCliente">
+    <header class="category-section-header">
+      <p>Para vos</p>
+      <h2>Recomendados según tus compras</h2>
+    </header>
+
+    <p *ngIf="recomendacionesLoading" role="status">
+      Cargando tus recomendaciones...
+    </p>
+
+    <div *ngIf="recomendacionesError" class="alert alert-warning" role="alert">
+      {{ recomendacionesError }}
+    </div>
+
+    <p *ngIf="!recomendacionesLoading && !recomendacionesError && recomendaciones.length === 0">
+      Todavía no tenemos recomendaciones para mostrarte.
+    </p>
+
+    <app-product-grid
+      *ngIf="!recomendacionesLoading && recomendaciones.length > 0"
+      [productos]="recomendaciones"
+      (verDetalle)="verDetalle($event)">
+    </app-product-grid>
+  </section>
+
   <!-- LOADING -->
   <div *ngIf="loading">
     Cargando...

@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, finalize, of, switchMap } from 'rxjs';
 import { ProductosService } from '../../services/productos.service';
 import { Producto } from '../../models/producto.model';
 import { AuthService } from '../../../auth/services/auth.service';
+import { RecomendacionService } from '../../../recomendacion/services/recomendacion.service';
 import { Categoria } from '../../models/categoria.model';
 import { SidebarCategoriasComponent } from '../../../../shared/components/sidebar-categorias/sidebar-categorias.component';
 import { ProductGridComponent } from '../../../../shared/components/product-grid/product-grid.component';
@@ -24,6 +27,10 @@ export class ProductosListComponent implements OnInit {
   categoriaSeleccionada: number | null = null;
   loading = false;
   error: string | null = null;
+  recomendaciones: Producto[] = [];
+  recomendacionesLoading = false;
+  recomendacionesError: string | null = null;
+  esCliente = false;
   vistaCategorias = false;
   categoriasConProductos: { categoria: string; productos: Producto[]; grupos: Producto[][] }[] = [];
   categoriasVisibles = 4;
@@ -37,9 +44,45 @@ export class ProductosListComponent implements OnInit {
   productosVisibles = 12;
   incrementoProductos = 12;
 
-  constructor(private productosService: ProductosService, private authService: AuthService, private router: Router, private route: ActivatedRoute, private categoriaState: CategoriaStateService) {}
+  constructor(
+    private productosService: ProductosService,
+    private authService: AuthService,
+    private recomendacionService: RecomendacionService,
+    private router: Router,
+    private route: ActivatedRoute,
+    private categoriaState: CategoriaStateService,
+    private destroyRef: DestroyRef
+  ) {}
 
   ngOnInit(): void {
+    this.authService.user$.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      switchMap((user) => {
+        this.esCliente = user?.tipo_usuario === 'cliente';
+        this.recomendaciones = [];
+        this.recomendacionesError = null;
+
+        if (!this.esCliente || !user) {
+          this.recomendacionesLoading = false;
+          return of(null);
+        }
+
+        this.recomendacionesLoading = true;
+        return this.recomendacionService.obtenerPorCliente(user.id).pipe(
+          catchError((error: unknown) => {
+            console.error('Error al cargar recomendaciones personalizadas', error);
+            this.recomendacionesError = 'No se pudieron cargar tus recomendaciones.';
+            return of(null);
+          }),
+          finalize(() => {
+            this.recomendacionesLoading = false;
+          })
+        );
+      })
+    ).subscribe((productos) => {
+      this.recomendaciones = productos ?? [];
+    });
+
     // =============================== CATEGORÍAS GLOBALES ===============================
     /*el componente se suscribe al estado actual de categorias para poder reutilizarlas*/
     this.categoriaState.categorias$.subscribe((cats) => { this.categorias = cats; });

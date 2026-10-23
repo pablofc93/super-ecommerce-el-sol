@@ -1,3 +1,4 @@
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,15 +16,19 @@ import { Carrito } from '../../models/carrito.model';
   styleUrls: ['./carrito.component.css'],
 })
 export class CarritoComponent implements OnInit {
-
-  /**propiedades del componente carrito */
   carrito: Carrito | null = null;
   loading = true;
   total = 0;
-  montoPagado: number = 0;
+  montoPagado = 0;
   procesando = false;
   error: string | null = null;
   mensajeExito: string | null = null;
+
+  /**
+   * Dirección base del servidor Django.
+   * Cambiala si tu backend utiliza otro host o puerto.
+   */
+  private readonly backendBaseUrl = 'http://localhost:8000';
 
   constructor(
     private carritoService: CarritoService,
@@ -31,71 +36,91 @@ export class CarritoComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.carritoService.carrito$.subscribe((carrito) => { //se sucribe al servicio carritoService para obtener el carrito actualizado
-      this.carrito = carrito; // almacena el carrito recibido en la propiedad carrito del componente
-      this.total = carrito ? this.carritoService.calcularTotal(carrito) : 0; //calcula el total del carrito utilizando el método calcularTotal del servicio carritoService
+    this.carritoService.carrito$.subscribe((carrito) => {
+      this.carrito = carrito;
+      this.total = carrito
+        ? this.carritoService.calcularTotal(carrito)
+        : 0;
     });
-    
-    /*obtiene el carrito actual del usuario desde el backend y actualiza la propiedad loading a false
-     cuando se completa la operación, ya sea con éxito o con error. 
-     Esto permite que la interfaz de usuario refleje el 
-     estado de carga del carrito de manera adecuada
-    */
+
     this.carritoService.getCarrito().subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
+      next: () => {
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      },
     });
   }
 
-  // Eliminación de producos desde el carrito
-  eliminar(itemId: number) {
-    this.carritoService.eliminarItem(itemId).subscribe({ // se suscribe al método eliminarItem del servicioCarritoService para eliminar un item del carrito
-      next: () => {
-        // ⏱ Esperar a que el backend actualice el carrito
-        setTimeout(() => {
-          //se obtiene el carrito actual
-          const carritoActual = this.carritoService.getCarritoActual();
-          
-          /**se verifica si el carrito actual es null o si no tiene productos */
-          if (!carritoActual || carritoActual.items.length === 0) {
+  /**
+   * Convierte la ruta relativa que devuelve Django
+   * en una URL absoluta que el navegador pueda cargar.
+   *
+   * Ejemplo:
+   * /media/productos/producto.png
+   * -> http://localhost:8000/media/productos/producto.png
+   */
+  obtenerImagenUrl(
+    imagenUrl: string | null | undefined,
+  ): string | null {
+    if (!imagenUrl) {
+      return null;
+    }
 
-            // ✅ Mostrar mensaje UNA sola vez
+    // Si ya viene una URL absoluta, se utiliza directamente.
+    if (/^https?:\/\//i.test(imagenUrl)) {
+      return imagenUrl;
+    }
+
+    const ruta = imagenUrl.startsWith('/')
+      ? imagenUrl
+      : `/${imagenUrl}`;
+
+    return `${this.backendBaseUrl}${ruta}`;
+  }
+
+  /**
+   * Si una imagen no puede cargarse, se oculta para
+   * que Angular muestre la alternativa con la inicial.
+   */
+  imagenError(event: Event): void {
+    const imagen = event.target as HTMLImageElement;
+    imagen.style.display = 'none';
+  }
+
+  eliminar(itemId: number): void {
+    this.carritoService.eliminarItem(itemId).subscribe({
+      next: () => {
+        setTimeout(() => {
+          const carritoActual =
+            this.carritoService.getCarritoActual();
+
+          if (!carritoActual || carritoActual.items.length === 0) {
             this.mensajeExito =
               'Carrito vaciado correctamente, gracias por elegirnos';
 
-            // ⏱ Redirección
             setTimeout(() => {
               this.router.navigate(['/productos']);
             }, 2000);
           }
         }, 200);
-      }
+      },
     });
   }
 
-  vaciar() {
-    /**limpia las variables de cualquier estado anterior */
+  vaciar(): void {
     this.error = null;
     this.mensajeExito = null;
-    this.procesando = true; //permite deshabilitar botones y mostrar un spinner mientras se procesa la acción de vaciar el carrito
+    this.procesando = true;
 
-    this.carritoService.vaciarCarrito().subscribe({ //se llama al método vaciarCarrito del servicio carritoService
+    this.carritoService.vaciarCarrito().subscribe({
       next: () => {
-        /**si la operación es correcta, 
-         * se muestra un mensaje de éxito 
-         * habilita nuevamente los botones
-         * vacía el carrito, carrito.items = []
-         * actualiza el total a 0
-         * luego de 2 segundos, se obtiene nuevamente el carrito ya actualizado y se redirige al usuario a la página principal
-         * */
         this.mensajeExito =
           'Carrito vaciado correctamente, gracias por elegirnos';
 
         this.procesando = false;
-        
-        /**se verifica que el el carrito exista
-         * si existe, se vacía el arreglo de items del carrito
-         */
+
         if (this.carrito) {
           this.carrito.items = [];
         }
@@ -116,27 +141,22 @@ export class CarritoComponent implements OnInit {
       },
     });
   }
-  
-  /**CONFIRMAR UNA COMPRA */
-  confirmar() {
+
+  confirmar(): void {
     this.error = null;
     this.mensajeExito = null;
-    
-    /**evalúa que el monto ingresado sea suficiente */
+
     if (this.montoPagado < this.total) {
       this.error = 'El monto ingresado es menor al total del pedido.';
       return;
     }
-    
-    /**si el monto procesado es suficiente, se inicia el proceso de confirmación
-     * primero desactiva todos los botones de la interfaz de usuario
-     * y muestra el spinner de carga mientras se procesa la confirmación del pedido
-     */
+
     this.procesando = true;
 
     this.carritoService.confirmarPedido(this.montoPagado).subscribe({
       next: () => {
-        this.mensajeExito = 'Compra realizada con éxito, gracias por elegirnos';
+        this.mensajeExito =
+          'Compra realizada con éxito, gracias por elegirnos';
 
         this.montoPagado = 0;
         this.total = 0;

@@ -36,33 +36,10 @@ export class AdminReportingService {
   // PRODUCTOS
   // =========================
 
-  getProductosMasVendidos(
-    page: number = 1
-  ): Observable<any> {
-    return this.http.get<any>(
-      `${this.baseUrl}/analitica/productos-mas-vendidos/?page=${page}`,
-      { withCredentials: true }
-    );
-  }
-
-  getProductosMasVendidosAgrupados(
-    fechaInicio?: string,
-    fechaFin?: string,
-  ): Observable<any[]> {
-    const params: any = {};
-
-    if (fechaInicio) {
-      params.fecha_inicio = fechaInicio;
-    }
-
-    if (fechaFin) {
-      params.fecha_fin = fechaFin;
-    }
-
+  getProductosMasVendidosAgrupados(): Observable<any[]> {
     return this.http.get<any[]>(
       `${this.baseUrl}/analitica/productos-mas-vendidos-agrupados/`,
       {
-        params,
         withCredentials: true
       }
     );

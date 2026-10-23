@@ -1,3 +1,4 @@
+
 from rest_framework import serializers
 from .models import Carrito, CarritoItem, Pedido, PedidoItem
 
@@ -6,29 +7,64 @@ from .models import Carrito, CarritoItem, Pedido, PedidoItem
 # ITEM DEL CARRITO
 # =========================
 class CarritoItemSerializer(serializers.ModelSerializer):
-    producto_id = serializers.IntegerField(source='producto.id', write_only=True) #se envía/recibe el campo producto_id
-    producto_nombre = serializers.CharField(source='producto.nombre', read_only=True) #obtener el nombre desde el producto relacionado y mostrarlo como producto_nombre
-    stock = serializers.IntegerField(source='producto.stock', read_only=True)
+    # ID del producto enviado al agregar un artículo al carrito.
+    producto_id = serializers.IntegerField(
+        source='producto.id',
+        write_only=True
+    )
 
-    #esta clase indica que el serializer trabaja con el modelo CarritoItem
-    #fiels indica cuales son los campos que el serializer va a manejar
+    # Datos del producto relacionado.
+    producto_nombre = serializers.CharField(
+        source='producto.nombre',
+        read_only=True
+    )
+
+    stock = serializers.IntegerField(
+        source='producto.stock',
+        read_only=True
+    )
+
+    # URL de la imagen del producto.
+    imagen_url = serializers.SerializerMethodField()
+
     class Meta:
         model = CarritoItem
         fields = [
             'id',
             'producto_id',
             'producto_nombre',
+            'imagen_url',
             'cantidad',
             'precio_unitario',
             'stock'
         ]
+
+    def get_imagen_url(self, obj):
+        """
+        Devuelve la URL absoluta de la imagen del producto.
+        Si el producto no tiene imagen, devuelve None.
+        """
+        producto = obj.producto
+
+        if not producto.imagen:
+            return None
+
+        request = self.context.get('request')
+
+        if request:
+            return request.build_absolute_uri(producto.imagen.url)
+
+        return producto.imagen.url
 
 
 # =========================
 # CARRITO
 # =========================
 class CarritoSerializer(serializers.ModelSerializer):
-    items = CarritoItemSerializer(many=True, read_only=True) #many=True indica que el carrito puede contener múltiples elementos
+    items = CarritoItemSerializer(
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = Carrito
@@ -39,6 +75,7 @@ class CarritoSerializer(serializers.ModelSerializer):
             'creado_en',
             'items'
         ]
+
         read_only_fields = [
             'cliente',
             'activo',
@@ -102,7 +139,7 @@ class PedidoDetalleItemSerializer(serializers.ModelSerializer):
 
 
 # =========================
-# ADMIN DETALLE PEDIDO - está pensado para mostrar el detalle completo de un pedido desde el panel de administración
+# ADMIN DETALLE PEDIDO
 # =========================
 class PedidoDetalleSerializer(serializers.ModelSerializer):
 
@@ -111,11 +148,14 @@ class PedidoDetalleSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    items = PedidoDetalleItemSerializer(many=True, read_only=True) #items almacena cada uno de los elementos que componen el item del pedido
+    items = PedidoDetalleItemSerializer(
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = Pedido
-        fields = [ #esto indica qué campos serán enviados al frontend
+        fields = [
             'id_pedido',
             'cliente_nombre',
             'total',

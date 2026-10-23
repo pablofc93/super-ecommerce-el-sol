@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status # permite utilizar HTTP_200_OK y HTTP_404_NOT_FOUD
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from apps.recomendacion.services.personalizadas import (
     RecomendacionPersonalizadaService
@@ -15,9 +15,15 @@ class RecomendacionPorClienteView(APIView):
     Devuelve recomendaciones personalizadas para un cliente
     en base a su historial de pedidos.
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, id_cliente):
+        if request.user.tipo_usuario != "admin" and request.user.pk != id_cliente:
+            return Response(
+                {"detail": "No tienes permiso para consultar estas recomendaciones"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # 1️⃣ Verificar que el cliente exista
         if not Cliente.objects.filter(id_cliente=id_cliente).exists():
             return Response(
@@ -31,7 +37,11 @@ class RecomendacionPorClienteView(APIView):
         )
 
         # 3️⃣ Serializar respuesta
-        serializer = ProductoSerializer(productos, many=True) # se envían las instancias para ser procesadas por el serializer
+        serializer = ProductoSerializer(
+            productos,
+            many=True,
+            context={"request": request}
+        ) # se envían las instancias para ser procesadas por el serializer
         return Response(serializer.data, status=status.HTTP_200_OK) # se devuelven los datos serializados como JSON
 
 
@@ -40,9 +50,15 @@ class RecomendacionPorCategoriaFavoritaView(APIView):
     Devuelve productos según la categoría más comprada por el cliente.
     Si no hay datos suficientes, aplica fallback a productos más vendidos.
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, id_cliente):
+        if request.user.tipo_usuario != "admin" and request.user.pk != id_cliente:
+            return Response(
+                {"detail": "No tienes permiso para consultar estas recomendaciones"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # 1️⃣ Verificar que el cliente exista
         if not Cliente.objects.filter(id_cliente=id_cliente).exists():
             return Response(
@@ -57,5 +73,9 @@ class RecomendacionPorCategoriaFavoritaView(APIView):
         )
 
         # 3️⃣ Serializar respuesta
-        serializer = ProductoSerializer(productos, many=True)
+        serializer = ProductoSerializer(
+            productos,
+            many=True,
+            context={"request": request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)

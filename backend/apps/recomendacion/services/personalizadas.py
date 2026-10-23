@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Case, Count, IntegerField, Max, Sum, When
 from apps.pedidos.models import PedidoItem
 from apps.productos.models import Producto
 from apps.analitica.models import ProductoMasVendido
@@ -9,7 +9,7 @@ class RecomendacionPersonalizadaService:
     Servicio de recomendaciones personalizadas basado en:
     - historial de compras del cliente
     - categorías favoritas
-    - fallback a productos más vendidos (analítica)
+    - fallback a productos más vendidos, calculado desde analítica o pedidos
     """
     # es un método estático, es decir, no necesita trabajar desde la instancia de esta clase, sino dentro de
     # la propia clase
@@ -51,7 +51,10 @@ class RecomendacionPersonalizadaService:
         # si no hay categorías favorita se ejecua el metodo auxiliar y devuelve (por defecto)
         # los productos más vendidos
         if not categorias_favoritas:
-            return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
+            return RecomendacionPersonalizadaService._fallback_mas_vendidos(
+                limite,
+                productos_excluidos=productos_comprados,
+            )
 
         # ---------------------------------------------
         # 3️⃣ Productos recomendados (misma categoría)
@@ -66,7 +69,10 @@ class RecomendacionPersonalizadaService:
         # 4️⃣ Fallback si no hay nuevos productos
         # ---------------------------------------------
         if not recomendaciones.exists():
-            return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
+            return RecomendacionPersonalizadaService._fallback_mas_vendidos(
+                limite,
+                productos_excluidos=productos_comprados,
+            )
             # si el cliente no compró nunca, se muestran los 5 productos más vendidos a nivel global
 
         return recomendaciones
@@ -104,7 +110,10 @@ class RecomendacionPersonalizadaService:
         )
 
         if not categoria_favorita:
-            return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
+            return RecomendacionPersonalizadaService._fallback_mas_vendidos(
+                limite,
+                productos_excluidos=productos_comprados,
+            )
 
         recomendaciones = (
             Producto.objects.filter(
@@ -117,21 +126,60 @@ class RecomendacionPersonalizadaService:
         # Fallback si no hay productos nuevos
         # ---------------------------------------------
         if not recomendaciones.exists():
-            return RecomendacionPersonalizadaService._fallback_mas_vendidos(limite)
+            return RecomendacionPersonalizadaService._fallback_mas_vendidos(
+                limite,
+                productos_excluidos=productos_comprados,
+            )
 
         return recomendaciones
 
     @staticmethod
-    def _fallback_mas_vendidos(limite):
+    def _fallback_mas_vendidos(limite, productos_excluidos=()):
         """
-        Recomendación alternativa basada en analítica:
-        productos más vendidos globalmente.
+        Usa el resumen analítico disponible y completa los resultados con
+        compras reales cuando ese resumen todavía no fue generado.
         """
-
-        productos_ids = (
+        productos_ids = list(
             ProductoMasVendido.objects
-            .order_by('-total_vendido')
+            .exclude(producto_id__in=productos_excluidos)
+            .values('producto_id')
+            .annotate(total_vendido=Max('total_vendido'))
+            .order_by('-total_vendido', 'producto_id')
             .values_list('producto_id', flat=True)[:limite]
         )
 
-        return Producto.objects.filter(id__in=productos_ids)
+        productos_validos = set(
+            Producto.objects.filter(pk__in=productos_ids)
+            .values_list('pk', flat=True)
+        )
+        productos_ids = [
+            producto_id
+            for producto_id in productos_ids
+            if producto_id in productos_validos
+        ]
+
+        if len(productos_ids) < limite:
+            productos_ids.extend(
+                PedidoItem.objects
+                .filter(
+                    pedido__estado__in=['pagado', 'enviado', 'entregado']
+                )
+                .exclude(producto_id__in=productos_excluidos)
+                .exclude(producto_id__in=productos_ids)
+                .values('producto_id')
+                .annotate(total_vendido=Sum('cantidad'))
+                .order_by('-total_vendido', 'producto_id')
+                .values_list('producto_id', flat=True)[:limite - len(productos_ids)]
+            )
+
+        if not productos_ids:
+            return Producto.objects.none()
+
+        orden = Case(
+            *[
+                When(pk=producto_id, then=posicion)
+                for posicion, producto_id in enumerate(productos_ids)
+            ],
+            output_field=IntegerField(),
+        )
+        return Producto.objects.filter(pk__in=productos_ids).order_by(orden)

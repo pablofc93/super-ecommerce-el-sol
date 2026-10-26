@@ -3,6 +3,7 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -15,10 +16,17 @@ from apps.pedidos.models import PedidoItem
 # =========================
 # Productos
 # =========================
+class CatalogPagination(PageNumberPagination):
+    page_size = 15
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class ProductoViewSet(viewsets.ModelViewSet):
 
     queryset = Producto.objects.all().order_by("-id") #se obtienen todos los productos y se ordenan por id de forma decreciente
     serializer_class = ProductoSerializer #indica el serializer que se va a utilizar
+    pagination_class = CatalogPagination
 
     #esta configuración permite que el endpoint pueda recibir información mediante formularios y archivos
     #importante para el manejo de imágenes de productos
@@ -112,6 +120,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 
     queryset = Categoria.objects.all().order_by("nombre") #obtener todas las categorias y las ordena por nombre
     serializer_class = CategoriaSerializer #se determina que esta vista usará CategoriaSerializer como serializador
+    pagination_class = CatalogPagination
 
     filter_backends = [filters.SearchFilter] #búsqueda de categorías por nombre
     search_fields = ["nombre"]

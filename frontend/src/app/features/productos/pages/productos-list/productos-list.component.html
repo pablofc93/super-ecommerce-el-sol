@@ -75,14 +75,15 @@
     *ngIf="
       !loading &&
       !error &&
-      productosVisibles < productosFiltrados.length
+      productosHayMas
     ">
 
     <button
       class="btn btn-outline-primary px-4"
+      [disabled]="cargandoMasProductos"
       (click)="mostrarMasProductos()">
 
-      Mostrar más
+      {{ cargandoMasProductos ? 'Cargando...' : 'Mostrar más' }}
 
     </button>
 
@@ -169,9 +170,12 @@
       </div>
     </section>
 
-    <div class="text-center mt-4 mb-5" *ngIf="categoriasVisibles < categoriasConProductos.length">
-      <button class="btn btn-outline-primary px-4" (click)="mostrarMasCategorias()">
-        Ver más categorías
+    <div class="text-center mt-4 mb-5" *ngIf="categoriasHayMas">
+      <button
+        class="btn btn-outline-primary px-4"
+        [disabled]="categoriasCargandoMas"
+        (click)="mostrarMasCategorias()">
+        {{ categoriasCargandoMas ? 'Cargando...' : 'Ver más categorías' }}
       </button>
     </div>
   </div>

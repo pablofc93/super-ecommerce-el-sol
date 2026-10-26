@@ -1,15 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import {
-  Observable,
-  expand,
-  map,
-  reduce,
-  switchMap,
-} from 'rxjs';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Observable, map, switchMap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { ProductoApi } from '../models/producto-api.model';
+import { PaginaApi } from '../models/pagina-api.model';
 import { Producto } from '../models/producto.model';
 import { ProductoAdapter } from '../adapters/producto.adapter';
 
@@ -76,37 +71,29 @@ export class ProductosService {
   }
 
   /**
-   * Obtiene los productos, con filtrado opcional por categoría
-   * y soporte para paginación.
+   * Obtiene una página de productos para las vistas de carga progresiva.
    */
-  getProductos(categoria?: number): Observable<Producto[]> {
-
-    let url = this.apiUrl;
+  getProductosPagina(
+    page: number,
+    categoria?: number,
+    pageSize: number = 12
+  ): Observable<PaginaApi<Producto>> {
+    let params = new HttpParams()
+      .set('page', page)
+      .set('page_size', pageSize);
 
     if (categoria !== undefined && categoria !== null) {
-      url += `?categoria=${categoria}`;
+      params = params.set('categoria', categoria);
     }
 
-    return this.http.get<any>(url, {
+    return this.http.get<PaginaApi<ProductoApi>>(this.apiUrl, {
+      params,
       withCredentials: true,
     }).pipe(
-      expand((response) =>
-        response.next
-          ? this.http.get<any>(response.next, {
-              withCredentials: true,
-            })
-          : []
-      ),
-
-      reduce((acumulado, response) => {
-        const productosPagina = response.results ?? response;
-
-        return [...acumulado, ...productosPagina];
-      }, [] as ProductoApi[]),
-
-      map((productos) =>
-        ProductoAdapter.fromApiList(productos)
-      )
+      map((response) => ({
+        ...response,
+        results: ProductoAdapter.fromApiList(response.results),
+      }))
     );
   }
 

@@ -35,6 +35,7 @@ export class PublicLayoutComponent implements OnInit {
 
   // Categorías globales para el sidebar
   categorias: Categoria[] = [];
+  private categoriasCargando = false;
 
   /**El constructor recibe las dependencias necesarias para el funcionamiento del componente
    * es decir, se aplica la inyección de dependencias para obtener instancias de los servicios y módulos necesarios
@@ -55,23 +56,27 @@ export class PublicLayoutComponent implements OnInit {
         this.showSidebar = !e.url.startsWith('/admin');
       });
 
-    // Carga inicial de categorías
-    this.categoriasService.listar().subscribe({
-      next: (cats) => {
-
-        // Guardar en el estado global
-        this.categoriaState.setCategorias(cats);
-
-        // Actualizar el sidebar
-        this.categorias = cats;
-      },
-      error: (err) =>
-        console.error('Error cargando categorías globales', err)
-    });
-
     // Mantener sincronizado el sidebar si las categorías cambian
     this.categoriaState.categorias$.subscribe(cats => {
       this.categorias = cats;
+    });
+  }
+
+  cargarCategorias(): void {
+    if (this.categorias.length > 0 || this.categoriasCargando) {
+      return;
+    }
+
+    this.categoriasCargando = true;
+    this.categoriasService.listar().subscribe({
+      next: (categorias) => {
+        this.categoriaState.setCategorias(categorias);
+        this.categoriasCargando = false;
+      },
+      error: (err) => {
+        console.error('Error cargando categorías globales', err);
+        this.categoriasCargando = false;
+      },
     });
   }
 }

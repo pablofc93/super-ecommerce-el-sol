@@ -94,7 +94,7 @@
      <!--categoria: representa la categoría actual 
      categoriasVisiblesLista: es el listado de categorias
      idx: es el índice de la categoría dentro de la lista. Ej: [0], [1], [2]...etc.-->
-    <section *ngFor="let categoria of categoriasVisiblesLista; let idx = index" class="home-section">
+    <section *ngFor="let categoria of categoriasConProductos; let idx = index" class="home-section">
 
       <!-- CABECERA DE CATEGORÍA -->
       <header class="home-section-header">
@@ -139,8 +139,13 @@
 
     <!-- ===================================== MOSTRAR MÁS CATEGORÍAS ====================================== -->
      <!--esta sección solamente aparece si todavía existen categorías que no se están mostrando-->
-    <div class="text-center" *ngIf="categoriasVisibles < categoriasConProductos.length">
-      <button class="btn btn-outline-primary px-4 home-more-button" (click)="mostrarMasCategorias()">Ver más categorías</button>
+    <div class="text-center" *ngIf="categoriasHayMas">
+      <button
+        class="btn btn-outline-primary px-4 home-more-button"
+        [disabled]="categoriasCargandoMas"
+        (click)="mostrarMasCategorias()">
+        {{ categoriasCargandoMas ? 'Cargando...' : 'Ver más categorías' }}
+      </button>
     </div>
 
   </div>

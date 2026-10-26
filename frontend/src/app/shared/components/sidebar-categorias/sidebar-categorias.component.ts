@@ -118,6 +118,9 @@ export class SidebarCategoriasComponent implements OnInit {
   @Output()
   categoriaChange = new EventEmitter<number | null>(); // Evento que se emite cuando se selecciona una categoría. Se envía el id de la categoría seleccionada o null si se selecciona "Todos los productos"
 
+  @Output()
+  categoriasSolicitadas = new EventEmitter<void>();
+
   openState = false; // Estado del sidebar. true = abierto, false = cerrado. Se actualiza cuando el usuario pasa el mouse por encima del sidebar o de la zona activadora
 
   /**
@@ -155,6 +158,7 @@ export class SidebarCategoriasComponent implements OnInit {
   }
 
   open(): void {
+    this.categoriasSolicitadas.emit();
     this.sidebarService.open();
   }
 

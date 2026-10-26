@@ -2,12 +2,13 @@ import { Component, DestroyRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, finalize, of, switchMap } from 'rxjs';
+import { catchError, finalize, forkJoin, of, switchMap } from 'rxjs';
 import { ProductosService } from '../../services/productos.service';
 import { Producto } from '../../models/producto.model';
 import { AuthService } from '../../../auth/services/auth.service';
 import { RecomendacionService } from '../../../recomendacion/services/recomendacion.service';
 import { Categoria } from '../../models/categoria.model';
+import { CategoriasService } from '../../services/categorias.service';
 import { SidebarCategoriasComponent } from '../../../../shared/components/sidebar-categorias/sidebar-categorias.component';
 import { ProductGridComponent } from '../../../../shared/components/product-grid/product-grid.component';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
@@ -33,19 +34,24 @@ export class ProductosListComponent implements OnInit {
   esCliente = false;
   vistaCategorias = false;
   categoriasConProductos: { categoria: string; productos: Producto[]; grupos: Producto[][] }[] = [];
-  categoriasVisibles = 4;
-  incrementoCategorias = 4;
+  categoriasHayMas = false;
+  categoriasCargandoMas = false;
 
   // ===================================== CARRUSEL CATEGORÍAS =====================================
   indicesActualesCategorias: Map<number, number> = new Map();
   public animacionesCategorias = new Map<number, 'left' | 'right'>();
 
   // ===================================== MOSTRAR MÁS PRODUCTOS =====================================
-  productosVisibles = 12;
-  incrementoProductos = 12;
+  productosHayMas = false;
+  cargandoMasProductos = false;
+  private paginaProductos = 1;
+  private paginaCategorias = 1;
+  private readonly tamanioPaginaProductos = 12;
+  private readonly tamanioPaginaCategorias = 4;
 
   constructor(
     private productosService: ProductosService,
+    private categoriasService: CategoriasService,
     private authService: AuthService,
     private recomendacionService: RecomendacionService,
     private router: Router,
@@ -102,7 +108,7 @@ export class ProductosListComponent implements OnInit {
   }
 
   // =============================== PRODUCTOS VISIBLES ===============================
-  get productosVisiblesLista(): Producto[] { return this.productosFiltrados.slice(0, this.productosVisibles); }
+  get productosVisiblesLista(): Producto[] { return this.productosFiltrados; }
 
   // =============================== NOMBRE DE CATEGORÍA ACTUAL ===============================
   get nombreCategoriaActual(): string {
@@ -111,24 +117,60 @@ export class ProductosListComponent implements OnInit {
   }
 
   // =============================== MOSTRAR MÁS PRODUCTOS ===============================
-  mostrarMasProductos(): void { this.productosVisibles = Math.min(this.productosVisibles + this.incrementoProductos, this.productosFiltrados.length); }
+  mostrarMasProductos(): void {
+    if (this.productosHayMas && !this.cargandoMasProductos) {
+      this.cargarPaginaProductos(this.paginaProductos + 1, true);
+    }
+  }
 
   // =============================== CARGA PRODUCTOS ===============================
   private loadProductos(): void {
-    this.loading = true; //se activa el estado de carga
-    this.error = null; //limpia cualquier error anterior
-    this.productosService.getProductos(this.categoriaSeleccionada ?? undefined).subscribe({ //se llama al servicio para obtener los productos
+    this.error = null;
+    this.productos = [];
+    this.productosFiltrados = [];
+    this.categoriasConProductos = [];
+    this.productosHayMas = false;
+    this.categoriasHayMas = false;
+    this.paginaProductos = 1;
+    this.paginaCategorias = 1;
 
-      next: (data) => {
-        this.productos = data;  //se devuelven todos los productos obtenidos del backend
-        // El backend ya filtra por categoría.
-        this.productosFiltrados = data; //se devuelven los productos por categoria, si es que se selecciona alguna
-        this.productosVisibles = this.incrementoProductos;
-        if (this.vistaCategorias) { this.armarCategorias(data); }
+    if (this.vistaCategorias) {
+      this.cargarPaginaCategorias(1, false);
+      return;
+    }
+
+    this.cargarPaginaProductos(1, false);
+  }
+
+  private cargarPaginaProductos(pagina: number, agregar: boolean): void {
+    if (agregar) {
+      this.cargandoMasProductos = true;
+    } else {
+      this.loading = true;
+    }
+    this.error = null;
+
+    this.productosService.getProductosPagina(
+      pagina,
+      this.categoriaSeleccionada ?? undefined,
+      this.tamanioPaginaProductos
+    ).subscribe({
+      next: (respuesta) => {
+        this.productos = agregar
+          ? [...this.productos, ...respuesta.results]
+          : respuesta.results;
+        this.productosFiltrados = this.productos;
+        this.productosHayMas = respuesta.next !== null;
+        this.paginaProductos = pagina;
         this.loading = false;
+        this.cargandoMasProductos = false;
       },
-      error: () => { this.error = 'No se pudieron cargar los productos.'; this.loading = false; }
-      
+      error: (err) => {
+        console.error('Error al cargar productos', err);
+        this.error = 'No se pudieron cargar los productos.';
+        this.loading = false;
+        this.cargandoMasProductos = false;
+      },
     });
   }
 
@@ -146,9 +188,13 @@ export class ProductosListComponent implements OnInit {
   verDetalle(productoId: number): void { this.router.navigate(['/productos', productoId]); }
 
   // =============================== CATEGORÍAS DESTACADAS ===============================
-  get categoriasVisiblesLista() { return this.categoriasConProductos.slice(0, this.categoriasVisibles); }
+  get categoriasVisiblesLista() { return this.categoriasConProductos; }
 
-  mostrarMasCategorias(): void { this.categoriasVisibles = Math.min(this.categoriasVisibles + this.incrementoCategorias, this.categoriasConProductos.length); }
+  mostrarMasCategorias(): void {
+    if (this.categoriasHayMas && !this.categoriasCargandoMas) {
+      this.cargarPaginaCategorias(this.paginaCategorias + 1, true);
+    }
+  }
 
   // =============================== CARRUSEL CATEGORÍAS ===============================
   moverCategoriaDerecha(indiceCategoria: number): void {
@@ -178,38 +224,80 @@ export class ProductosListComponent implements OnInit {
     return this.categoriasConProductos[indiceCategoria]?.grupos[indiceActual] || [];
   }
 
-  // =============================== ARMAR CATEGORÍAS ===============================
-  /** */
-  private armarCategorias(productos: Producto[]): void {
-    const mapa = new Map<string, Producto[]>();
-    
-    /*
-    recorrre la lista de productos y los agrupa por nombre de categoria
-    si un producto no tiene categoria, se agrupa bajo el nombre "Sin categoría"
-    */
-    productos.forEach((producto) => {
-      const nombreCategoria = producto.categoria?.nombre ?? 'Sin categoría';
-      if (!mapa.has(nombreCategoria)) { mapa.set(nombreCategoria, []); }
-      mapa.get(nombreCategoria)?.push(producto);
+  private cargarPaginaCategorias(pagina: number, agregar: boolean): void {
+    if (agregar) {
+      this.categoriasCargandoMas = true;
+    } else {
+      this.loading = true;
+    }
+    this.error = null;
+
+    this.categoriasService.listarPagina(pagina, this.tamanioPaginaCategorias).subscribe({
+      next: (respuesta) => {
+        const categorias = respuesta.results;
+        const productosPorCategoria$ = categorias.map((categoria) =>
+          this.productosService.getProductosPagina(1, categoria.id, 8)
+        );
+
+        if (productosPorCategoria$.length === 0) {
+          this.finalizarCargaCategorias([], respuesta.next !== null, pagina, agregar);
+          return;
+        }
+
+        forkJoin(productosPorCategoria$).subscribe({
+          next: (paginasProductos) => {
+            const cargadas = categorias.flatMap((categoria, indice) => {
+              const productos = paginasProductos[indice].results;
+              if (productos.length === 0) return [];
+              return [{
+                categoria: categoria.nombre,
+                productos,
+                grupos: this.crearGruposProductos(productos),
+              }];
+            });
+            this.finalizarCargaCategorias(cargadas, respuesta.next !== null, pagina, agregar);
+          },
+          error: (err) => this.errorCargaCategorias(err),
+        });
+      },
+      error: (err) => this.errorCargaCategorias(err),
     });
+  }
 
-    this.categoriasConProductos = [];
+  private crearGruposProductos(productos: Producto[]): Producto[][] {
+    const grupos: Producto[][] = [];
+    const cantidadVisible = Math.min(4, productos.length);
 
-    
-    mapa.forEach((productosCategoria, categoria) => {
-      const primerosOcho = productosCategoria.slice(0, 8);
-      const grupos: Producto[][] = [];
-      const totalProductos = primerosOcho.length;
-      const ventanaVisible = Math.min(4, totalProductos);
-      if (totalProductos === 0) { return; }
-      for (let i = 0; i < totalProductos; i++) {
-        const grupo: Producto[] = [];
-        for (let j = 0; j < ventanaVisible; j++) { const indice = (i + j) % totalProductos; grupo.push(primerosOcho[indice]); }
-        grupos.push(grupo);
+    for (let indice = 0; indice < productos.length; indice++) {
+      const grupo: Producto[] = [];
+      for (let desplazamiento = 0; desplazamiento < cantidadVisible; desplazamiento++) {
+        grupo.push(productos[(indice + desplazamiento) % productos.length]);
       }
-      this.categoriasConProductos.push({ categoria, productos: primerosOcho, grupos });
-    });
-    this.categoriasConProductos.sort((a, b) => a.categoria.localeCompare(b.categoria));
-    this.categoriasVisibles = Math.min(4, this.categoriasConProductos.length);
+      grupos.push(grupo);
+    }
+
+    return grupos;
+  }
+
+  private finalizarCargaCategorias(
+    categorias: { categoria: string; productos: Producto[]; grupos: Producto[][] }[],
+    hayMas: boolean,
+    pagina: number,
+    agregar: boolean
+  ): void {
+    this.categoriasConProductos = agregar
+      ? [...this.categoriasConProductos, ...categorias]
+      : categorias;
+    this.categoriasHayMas = hayMas;
+    this.paginaCategorias = pagina;
+    this.loading = false;
+    this.categoriasCargandoMas = false;
+  }
+
+  private errorCargaCategorias(error: unknown): void {
+    console.error('Error al cargar categorías y productos', error);
+    this.error = 'No se pudieron cargar las categorías.';
+    this.loading = false;
+    this.categoriasCargandoMas = false;
   }
 }

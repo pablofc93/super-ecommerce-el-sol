@@ -6,7 +6,8 @@
   <!-- SIDEBAR GLOBAL -->
   <app-sidebar-categorias
     *ngIf="showSidebar"
-    [categorias]="categorias"> // se le pasa al componente SidebarCategoriasComponent la lista de categorías obtenida desde el servicio CategoriasService
+    [categorias]="categorias"
+    (categoriasSolicitadas)="cargarCategorias()">
   </app-sidebar-categorias>
 
   <!-- CONTENIDO -->

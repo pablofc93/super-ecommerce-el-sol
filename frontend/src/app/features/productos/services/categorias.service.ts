@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Categoria } from '../models/categoria.model';
+import { CategoriaApi } from '../models/categoria-api.model';
+import { PaginaApi } from '../models/pagina-api.model';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +34,19 @@ export class CategoriasService {
         return [];
       })
 
+    );
+  }
+
+  listarPagina(page: number, pageSize: number): Observable<PaginaApi<Categoria>> {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('page_size', pageSize);
+
+    return this.http.get<PaginaApi<CategoriaApi>>(this.apiUrl, { params }).pipe(
+      map((response) => ({
+        ...response,
+        results: response.results.map(({ id, nombre }) => ({ id, nombre })),
+      }))
     );
   }
 

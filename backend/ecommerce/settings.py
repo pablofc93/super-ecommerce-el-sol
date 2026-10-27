@@ -103,14 +103,35 @@ MIDDLEWARE = [
 # CORS
 # =========================
 
-CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "CORS_ALLOWED_ORIGINS",
-        "http://localhost:4200,http://127.0.0.1:4200",
-    ).split(",")
-    if origin.strip()
-]
+def get_configured_origins(*environment_variables):
+    origins = []
+    for variable in environment_variables:
+        origins.extend(
+            origin.strip().rstrip("/")
+            for origin in os.getenv(variable, "").split(",")
+            if origin.strip()
+        )
+    return list(dict.fromkeys(origins))
+
+
+development_origins = (
+    "http://localhost:4200",
+    "http://127.0.0.1:4200",
+)
+
+configured_origins = get_configured_origins(
+    "CORS_ALLOWED_ORIGINS",
+    "FRONTEND_URL",
+    "FRONTEND_URLS",
+)
+default_frontend_origins = (
+    development_origins
+    if DEBUG
+    else ("https://super-ecommerce-el-8g1tweom9-pablodev1.vercel.app",)
+)
+CORS_ALLOWED_ORIGINS = list(dict.fromkeys(
+    [*configured_origins, *default_frontend_origins]
+))
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -125,14 +146,16 @@ CORS_ALLOW_METHODS = list(default_methods)
 # CSRF y cookies
 # =========================
 
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "CSRF_TRUSTED_ORIGINS",
-        "http://localhost:4200,http://127.0.0.1:4200",
-    ).split(",")
-    if origin.strip()
-]
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(
+    [
+        *get_configured_origins(
+            "CSRF_TRUSTED_ORIGINS",
+            "FRONTEND_URL",
+            "FRONTEND_URLS",
+        ),
+        *default_frontend_origins,
+    ]
+))
 
 COOKIE_SAMESITE = os.getenv(
     "COOKIE_SAMESITE", "Lax" if DEBUG else "None"

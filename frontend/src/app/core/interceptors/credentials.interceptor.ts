@@ -10,9 +10,16 @@ export const credentialsInterceptor: HttpInterceptorFn = (
   // Envía las cookies al backend cuando la solicitud
   // se dirige a la API configurada.
   if (req.url.startsWith(environment.apiUrl)) {
+    const isPublicCatalogRead =
+      req.method === 'GET' &&
+      [
+        `${environment.apiUrl}/productos/productos/`,
+        `${environment.apiUrl}/productos/categorias/`,
+      ].some((url) => req.url.startsWith(url));
+
     return next(
       req.clone({
-        withCredentials: true,
+        withCredentials: !isPublicCatalogRead,
       })
     );
   }

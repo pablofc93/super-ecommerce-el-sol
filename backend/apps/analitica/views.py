@@ -196,12 +196,6 @@ class ReglasAsociacionView(APIView):
             request
         )
 
-        guardar_reporte(
-            "recomendacion",
-            result_page,
-            request.user
-        )
-
         return paginator.get_paginated_response(result_page)
 
 
